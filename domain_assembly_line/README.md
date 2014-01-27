@@ -1,13 +1,20 @@
-# domain-assembly-line
+# Assembly Line
 
-A Clojure library designed to ... well, that part is up to you.
+Clojure library designed to create data workflows with different stations where the processing can be done.
+The assembly line can easily be extend with new stations, you can run it up to a specific station, pause it,
+resume it and execute it asynchronously.
 
 ## Usage
 
-FIXME
+Include in leiningen dependencies
+```
+[com.timezynk.domain/assembly-line "0.1.0"]
+``
+
+See test/domain/assembly_line_test.clj for documentation and usage examples.
 
 ## License
 
-Copyright © 2014 FIXME
+Copyright © 2014 TimeZynk AB
 
-Distributed under the Eclipse Public License, the same as Clojure.
+Distributed under the BSD 3-Clause License.

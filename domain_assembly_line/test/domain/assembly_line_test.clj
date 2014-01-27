@@ -1,4 +1,4 @@
-(ns domain-assembly-line.core-test
+(ns domain.assembly-line-test
   (:require [clojure.test :refer :all]
             [com.timezynk.domain.assembly-line :as line]))
 
