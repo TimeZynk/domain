@@ -9,9 +9,9 @@ resume it and execute it asynchronously.
 Include in leiningen dependencies
 ```
 [com.timezynk.domain/assembly-line "0.1.0"]
-``
+```
 
-See test/domain/assembly_line_test.clj for documentation and usage examples.
+See [the tests](test/domain/assembly_line_test.clj) for documentation and usage examples.
 
 ## License
 
