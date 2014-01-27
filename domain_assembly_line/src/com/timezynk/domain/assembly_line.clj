@@ -1,6 +1,5 @@
-(ns domain-assembly-line.assembly-line
-  (:require ;[clojure.tools.logging     :as log :refer [spy info warn error]]
-            [clojure.core.reducers     :as r]))
+(ns com.timezynk.domain.assembly-line
+  (:require [clojure.core.reducers     :as r]))
 
 (defprotocol AssemblyLineExecute
   (add-stations [this placement target-station new-stations]

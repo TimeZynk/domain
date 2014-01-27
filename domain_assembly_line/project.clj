@@ -1,4 +1,4 @@
-(defproject com.timezynk.domain.domain-assembly-line "0.1.0"
+(defproject com.timezynk.domain/assembly-line "0.1.0"
   :description "The assembly line of the domain project"
   :url "https://github.com/TimeZynk/domain/domain-assembly-line"
   :license {:name "Eclipse Public License"
