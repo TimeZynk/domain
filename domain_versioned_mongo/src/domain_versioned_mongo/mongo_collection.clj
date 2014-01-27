@@ -1,6 +1,6 @@
 (ns domain-versioned-mongo.mongo-collection
   (:refer-clojure :exclude [conj! disj!])
-  (:require [domain-core.relation         :as rel]
+  (:require [com.timezynk.domain.relation         :as rel]
             [domain-versioned-mongo.mongo :as m]))
 
 (def ^:dynamic *debug* false)
@@ -9,7 +9,7 @@
  It might be possible to migrate to a relational database in the future via this relationship."
 
 (defrecord MongoCollection [cname persistence-protocol restriction projection-keys
-                            log query-result old-docs]
+                            log query-result]
 
   clojure.lang.IDeref
   (deref [this]
@@ -41,9 +41,9 @@
                  :restriction  restriction)
           (update-in [:log :disj!-result] conj wresult))))
 
-  (rel/update-in! [this predicate new-doc]
+  (rel/update-in! [this predicate new-doc old-records]
     (let [restriction (merge restriction predicate)
-          result      (m/update! cname restriction new-doc)]
+          result      (m/update! cname restriction new-doc old-records)]
       (-> this
           (assoc :query-result result
                  :restriction  restriction)

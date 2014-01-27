@@ -1,8 +1,8 @@
 (ns domain-example.person
   "An example domain type"
-  (:require ;[domain-core.domain    :refer [rest-routes]]
+  (:require ;[com.timezynk.domain.domain    :refer [rest-routes]]
             [domain-example.domain :refer [dom-type]]
-            [domain-core.schema    :as s]))
+            [com.timezynk.domain.schema    :as s]))
 
 (def persons
   (dom-type

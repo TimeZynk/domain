@@ -7,5 +7,6 @@
                  [compojure "1.1.5"]
                  [slingshot "0.10.3"]
                  [joda-time "2.1"]
-                 [congomongo "0.4.1"] ;used by validation, should be removed?
-                 [com.timezynk.domain.domain-assembly-line "0.1.0"]])
+                 [potemkin "0.3.4"]
+                 [org.mongodb/mongo-java-driver "2.10.1"] ;used by validation, should be removed?
+                 [com.timezynk.domain/assembly-line "0.1.0"]])

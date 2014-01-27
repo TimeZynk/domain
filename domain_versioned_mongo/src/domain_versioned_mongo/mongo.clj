@@ -10,7 +10,7 @@
 
             ;; mchan disabled to start with.
             ;[domain-versioned-mongo.channel :as mchan]
-            [domain-core.relation           :as rel]
+            [com.timezynk.domain.relation           :as rel]
             domain-versioned-mongo.predicates)
   (:import [org.bson.types ObjectId]
            [org.joda.time LocalDateTime]))
@@ -39,15 +39,10 @@
     or   domain-versioned-mongo.predicates/or*
     not  domain-versioned-mongo.predicates/not*
     exists domain-versioned-mongo.predicates/exists
-    ;;like domain-versioned-mongo.predicates/like
-    ;;nil? domain-versioned-mongo.predicates/nil?*
     in   domain-versioned-mongo.predicates/in})
 
 (defmethod rel/where* :default [clause]
-  (->> clause
-       (postwalk-replace predicate-symbols)
-       ;(postwalk-replace ids-in)
-       ))
+  (postwalk-replace predicate-symbols clause))
 
 (defmacro where [clause]
   (rel/where* clause))
@@ -111,17 +106,14 @@
       ;(mchan/put! :insert cname new)
       new)))
 
-(defn get-old-docs [cname old-docs restriction]
-  (or old-docs
-      (let [oldies (mongo/fetch cname
-                                :where (assoc restriction
-                                         :valid-to nil))]
-        (if (sequential? oldies) oldies [oldies]))))
+(defn get-old-docs [cname restriction]
+  (let [oldies (mongo/fetch cname :where (assoc restriction :valid-to nil))]
+    (if (sequential? oldies) oldies [oldies])))
 
-(defn update! [cname restriction new-doc & {:keys [old-docs]}]
+(defn update! [cname restriction new-doc]
   (mongo/with-mongo db
     (let [restriction (postwalk-replace ids-in restriction)
-          oldies      (get-old-docs cname old-docs restriction)
+          oldies      (get-old-docs cname restriction)
           old-ids     (map :_id oldies)
           now         (System/currentTimeMillis)
           new-doc     (dissoc (rename-ids-in new-doc) :_id :_pid)

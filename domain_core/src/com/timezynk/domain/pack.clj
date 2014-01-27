@@ -1,5 +1,5 @@
-(ns domain-core.pack
-  (:require [domain-core.update-leafs :refer [update-leafs]]
+(ns com.timezynk.domain.pack
+  (:require [com.timezynk.domain.update-leafs :refer [update-leafs]]
    [clojure.core.reducers             :as r]
    [clojure.edn                       :as edn]
    [clojure.string                    :as s]))

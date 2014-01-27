@@ -1,4 +1,4 @@
-(ns domain-core.validation
+(ns com.timezynk.domain.validation
   "This namespace is copied from tzbackend.util.schema.validation."
   (:require [clojure.set                       :refer [union]]
             ;[clojure.tools.logging             :as log :refer [spy info warn]]

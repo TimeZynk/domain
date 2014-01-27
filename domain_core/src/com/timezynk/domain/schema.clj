@@ -1,9 +1,9 @@
-(ns domain-core.schema
+(ns com.timezynk.domain.schema
   (:refer-clojure :exclude [map vector string number boolean time] )
   (:require [clojure.core                         :as c]
             ;[clojure.tools.logging                :as log :refer [spy info warn]]
             [clojure.core.reducers                :as r]
-            [domain-core.update-leafs :refer [update-leafs]]
+            [com.timezynk.domain.update-leafs :refer [update-leafs]]
             ;[tzbackend.session.current            :as current-session]
             )
   (:import [org.bson.types ObjectId]))

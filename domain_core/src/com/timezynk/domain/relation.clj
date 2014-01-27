@@ -1,4 +1,4 @@
-(ns domain-core.relation
+(ns com.timezynk.domain.relation
   (:refer-clojure :exclude [conj! disj!]))
 
 (defprotocol Relation
@@ -10,3 +10,6 @@
 
 (defmulti where* (fn [query & {:keys [db]}]
                    (or db :default)))
+
+(defmacro where [clause]
+  (where* clause))

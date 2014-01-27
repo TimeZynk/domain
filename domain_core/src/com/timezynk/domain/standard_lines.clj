@@ -1,13 +1,13 @@
-(ns domain-core.assembly-lines
+(ns com.timezynk.domain.standard-lines
   "Useful steps to add to assembly lines in tzbackend.future.domain"
   (:require [clojure.core.reducers              :as r]
-            [domain-core.validation             :as v]
-            [domain-core.pack                   :as pack]
-            [domain-assembly-line.assembly-line :as line]
-            [domain-core.persistence            :as p]
-            [domain-core.relation               :as rel]
-            [domain-core.update-leafs           :refer [update-leafs, update-leafs-via-directive]]
-            [domain-assembly-line.assembly-line :refer [assembly-line]]))
+            [com.timezynk.domain.validation             :as v]
+            [com.timezynk.domain.pack                   :as pack]
+            [com.timezynk.domain.assembly-line :as line]
+            [com.timezynk.domain.persistence            :as p]
+            [com.timezynk.domain.relation               :as rel]
+            [com.timezynk.domain.update-leafs           :refer [update-leafs, update-leafs-via-directive]]
+            [com.timezynk.domain.assembly-line :refer [assembly-line]]))
 
 
                                         ; Steps
@@ -56,10 +56,8 @@
                                :else               (fun v-org v-upd))]]
              [k-upd new-v])))
 
-(defn apply-updaters [{:keys [collection]} new-doc]
-  (let [old-doc (-> (get collection :old-docs)
-                    deref
-                    first)]
+(defn apply-updaters [{:keys [collection old-docs]} new-doc]
+  (let [old-doc (-> old-docs deref first)]
     (map-leaf-walk old-doc
                    new-doc
                    (fn [old-v upd-v]
@@ -200,21 +198,20 @@
 
 (defn execute-insert! [{:keys [collection properties]} doc]
   (let [core-doc   (handle-ref-resources properties :remove doc)
-        added-docs @(-> (rel/conj! collection core-doc))
+        added-docs @(rel/conj! collection core-doc)
         ]
     (doseq [added-doc added-docs]
       (insert-ref-docs! properties doc added-doc))
     added-docs))
 
-(defn execute-update! [{:keys [collection]} doc]
-  ;;@(get collection :old-docs)
-  @(rel/update-in! collection {} doc))
+(defn execute-update! [{:keys [collection restriction]} doc]
+  @(rel/update-in! collection restriction doc))
 
-(defn execute-destroy! [{:keys [collection]} _]
-  @(rel/disj! collection {}))
+(defn execute-destroy! [{:keys [collection restriction]} _]
+  @(rel/disj! collection restriction))
 
-(defn execute-fetch [{:keys [collection] :as dtc} _]
-  @(rel/select collection {}))
+(defn execute-fetch [{:keys [collection restriction] :as dtc} _]
+  @(rel/select collection restriction))
 
 
                                         ; AssemblyLines

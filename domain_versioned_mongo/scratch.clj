@@ -1,6 +1,6 @@
-(require :reload-all '[domain-core.domain :as dom]
-         '[domain-core.persistence :as p]
-         '[domain-core.relation :as rel]
+(require :reload-all '[com.timezynk.domain.domain :as dom]
+         '[com.timezynk.domain.persistence :as p]
+         '[com.timezynk.domain.relation :as rel]
          '[domain-versioned-mongo.mongo :as m])
 
 (require :reload-all '[domain-versioned-mongo.mongo-collection :refer [mongo-collection]])

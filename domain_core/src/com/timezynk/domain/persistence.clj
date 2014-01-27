@@ -1,4 +1,4 @@
-(ns domain-core.persistence
+(ns com.timezynk.domain.persistence
   (:refer-clojure :exclude [conj! disj!]))
 
 (defprotocol Persistence

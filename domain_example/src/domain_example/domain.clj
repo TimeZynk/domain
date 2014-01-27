@@ -1,8 +1,8 @@
 (ns domain-example.domain
   "This file glue together the different parts"
   (:require [clojure.tools.logging                   :refer [spy]]
-            [domain-core.domain                      :as dom]
-            [domain-core.schema                      :as s]
+            [com.timezynk.domain.domain                      :as dom]
+            [com.timezynk.domain.schema                      :as s]
             [domain-versioned-mongo.mongo-collection :refer [mongo-collection
                                                              collection-name]])
   (:import [domain_core.persistence Persistence]))

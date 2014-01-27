@@ -5,7 +5,7 @@
             [tzbackend.util.db         :refer [db]]))
 
 ;; This functionality is disabled to start with, since there are dependencies
-;; on tzbackend. Also, it should be placed in domain-core.
+;; on tzbackend. Also, it should be placed in com.timezynk.domain.
 ;;
 ;; There are simply to little time and to much to do for now.
 
