@@ -12,13 +12,11 @@ bit between different domain types, but still looks very similar for the most pa
 
 *** Stations
 
-The AssemblyLine consists of stations with one or several functions. They are defined
-as a hashmap. Every entry is a station. The key is the name and the value
-is the functions.
+The AssemblyLine consists of stations with one or several functions.
 
 The functions have two parameters. The first is the environment, which is a value
 used as a common ground through the process. The second one is the value >>in production<<.
-This value is sent through the functions of the stations and the result of the last
+This value is sent through the functions of the stations. The result of the last
 function in the line will be the result of the whole line when derefed.
 
 The stations is defined via a vector. Every other value is the name of a station
@@ -38,12 +36,13 @@ The environment – which is optional by the way – is added as a named paramet
 "
 *** Prepare, Execute and Deref
 
-So far we have not executed the Assembly Lines. Before we do that we have to prepare
-the assembly line. This is done via the prepare function. It takes a single argument.
-This is the initial in production value. Then we can execute the assembly line and
-process the in production value. The most simple way to do this is to deref the
-assembly line. It will then execute from the start to the end and finally produce a
-result value.
+So far we have not executed the Assembly Line. Before we do, we have to prepare
+the assembly line. This is done via the prepare function. It takes a single argument,
+which is the initial in production value. When prepared, we can execute the assembly line and
+process the in production value.
+
+The most simple way to do this is to deref the assembly line. It will then execute from the
+start to the end and finally produce a result value.
 "
 
 (deftest execute-assembly-line
@@ -98,10 +97,6 @@ The wrapper function is added as a named parameter when the assembly line is cre
 (deftest sequence-input-with-wrapper
   (is (= [20,30,40,50] @(line/prepare process-number-3 [1,2,3,4]))))
 
-
-
-
-
 "
 There is also a possibility to execute an assembly line explicitly via the execute!
 function. It takes a station name as an optional argument. If a station name is given
@@ -119,11 +114,10 @@ from where it was.
   (is (= :process (:at process-number-2-validated))))
 
 "
-process-number-4-validated is now defined as an assembly-line, paused and ready to
-continue with the :process station.
+process-number-2-validated is now defined as an assembly-line, paused and ready to
+continue from the :process station.
 
-Now the assembly line is paused and ready to run the last station, :present.
-From here on, you could call execute! with no argument to finish the process, or
+Call execute! with no argument to finish the process, or
 just deref it if you want to get the final value. Another possiblity is to add additional
 stations if you want to further process the in production value.
 "
