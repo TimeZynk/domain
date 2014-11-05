@@ -3,16 +3,16 @@
             [com.timezynk.domain.assembly-line :as line]))
 
 "
-future.assembly-line
---------------------
-The AssemblyLine replaces the ideas of recipes. The AssemblyLine was designed to
-model CRUD operations, which typically consists of several steps that differs a
-bit between different domain types, but still looks very similar for the most part.
+Assembly Lines
+--------------
+Assembly Line was designed to model CRUD operations,which typically consists of several
+steps that differs a bit between different domain types, but still looks very similar
+for the most part.
 
 
 *** Stations
 
-The AssemblyLine consists of stations with one or several functions.
+Assembly Lines consists of stations with one or several functions.
 
 The functions have two parameters. The first is the environment, which is a value
 used as a common ground through the process. The second one is the value >>in production<<.
@@ -38,8 +38,8 @@ The environment – which is optional by the way – is added as a named paramet
 
 So far we have not executed the Assembly Line. Before we do, we have to prepare
 the assembly line. This is done via the prepare function. It takes a single argument,
-which is the initial in production value. When prepared, we can execute the assembly line and
-process the in production value.
+which is the initial value in production. When prepared, we can execute the assembly line and
+process this value.
 
 The most simple way to do this is to deref the assembly line. It will then execute from the
 start to the end and finally produce a result value.
@@ -124,31 +124,3 @@ stations if you want to further process the in production value.
 
 (deftest deref-paused-assembly-line
   (is (= 100 @process-number-2-validated)))
-
-"
-*** Async
-
-The assembly lines are asynchronous in nature."
-
-(deftest test-long-running-assembly-lines
-  (let [now (System/currentTimeMillis)
-        line-a (-> process-number
-                   (line/add-stations :before :process [:delay (fn [_ n]
-                                                            (Thread/sleep 500)
-                                                            n)])
-                   (line/prepare 5)
-                   (line/execute!))
-        line-b (-> process-number
-                   (line/add-stations :before :process [:delay (fn [_ n]
-                                                            (Thread/sleep 250)
-                                                            n)])
-                   (line/prepare 9)
-                   (line/execute!))]
-    ; The lines are executing in the background
-    (is (not (realized? (:in-production line-a))))
-    (is (not (realized? (:in-production line-b))))
-    ; Dereferencing waits for the value to become available
-    (is (= 160 (+ @line-a @line-b)))
-    (is (< 500 (- (System/currentTimeMillis) now)))
-    (is (realized? (:in-production line-a)))
-    (is (realized? (:in-production line-b)))))
