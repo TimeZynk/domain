@@ -46,6 +46,7 @@ start to the end and finally produce a result value.
 "
 
 (deftest execute-assembly-line
+  (is (= 5 (:in-production (line/prepare process-number 5))))
   (is (= 430 @(line/prepare process-number 42)))
   (is (= 100 @(line/prepare process-number 9))))
 
