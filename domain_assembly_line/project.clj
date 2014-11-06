@@ -1,5 +1,5 @@
 (defproject com.timezynk.domain/assembly-line "0.2.0"
-  :description "Assembly lines was initially created to model CRUD operations. An assembly line takes an input value that is processed by different stations. The stations can be changed or removed and new stations can be added."
+  :description "Designed to create data workflows with different stations where the processing can be done. The assembly line can easily be extend with new stations, you can run it up to a specific station, pause it, resume it and execute it asynchronously."
   :url "https://github.com/TimeZynk/domain/tree/master/domain_assembly_line"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
