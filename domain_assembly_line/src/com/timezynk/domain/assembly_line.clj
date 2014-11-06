@@ -108,9 +108,7 @@
       (pln (str (name step) ": ") (get stations step [])))
     (br)
     (pln "---------")
-    (pln "Currently in-production: " (if (realized? in-production)
-                                       @in-production
-                                       "unrealized promise"))
+    (pln "Currently in-production: " in-production)
     (cond
       (= at ::finished) (pln "Finished")
       at                (pln "Currently at station " (str at))
@@ -124,7 +122,7 @@
     (map->AssemblyLine {:stations            stations
                         :station-order       station-order
                         :at                  nil
-                        :in-production       (delay nil)
+                        :in-production       nil ;(delay nil)
                         :environment         environment
                         :wrapper-f           wrapper-f
                         :execution-wrapper-f execution-wrapper-f})))
