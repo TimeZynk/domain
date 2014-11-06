@@ -6,10 +6,7 @@ resume it and execute it asynchronously.
 
 ## Usage
 
-Include in leiningen dependencies
-```
-[com.timezynk.domain/assembly-line "0.1.0"]
-```
+[![Clojars Project](http://clojars.org/com.timezynk.domain/assembly-line/latest-version.svg)](http://clojars.org/com.timezynk.domain/assembly-line)
 
 See [the tests](test/domain/assembly_line_test.clj) for documentation and usage examples.
 
