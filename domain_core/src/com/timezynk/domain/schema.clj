@@ -32,6 +32,10 @@
 (defn map [properties & options]
   (apply (t :map) :properties properties options))
 
+(defn maps [properties & options]
+  (apply vector (map properties)
+         options))
+
 (comment defn render-schema "Prepares the schema to be serialized into JSON"
   [schema]
   (update-leafs schema replace-function))

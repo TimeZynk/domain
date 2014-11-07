@@ -25,49 +25,6 @@
   [collection doc]
   (pack/pack-doc collection doc))
 
-(defn pack-station
-  "Add pack station to assembly line"
-  [aline]
-  (line/add-stations aline :before :validate [:pack [validate-doc-input!, pack-doc]]))
-
-; Apply Updaters
-
-(declare map-leaf-walk)
-
-(defn- update-array [v-org v-upd fun]
-  (if (map? v-upd)
-    (map #(map-leaf-walk %1 %2 fun)
-         v-org
-         v-upd)
-    (fun v-org v-upd)))
-
-(defn- fill-with-nil [m m2]
-  (r/reduce (fn [m key]
-              (update-in m [key] identity))
-            m
-            (keys m2)))
-
-(defn- map-leaf-walk [m-org m-upd fun]
-  (into {} (for [[k-upd v-upd] m-upd
-                 [k-org v-org] (fill-with-nil m-org m-upd)
-                 :when (= k-upd k-org)
-                 :let  [new-v (cond
-                               (map? v-upd)        (map-leaf-walk v-org v-upd fun)
-                               (sequential? v-upd) (update-array v-org v-upd fun)
-                               :else               (fun v-org v-upd))]]
-             [k-upd new-v])))
-
-(defn apply-updaters [{:keys [collection old-docs]} new-doc]
-  (let [old-doc (-> old-docs deref first)]
-    (map-leaf-walk old-doc
-                   new-doc
-                   (fn [old-v upd-v]
-                     (if (fn? upd-v)
-                       (upd-v old-v)
-                       upd-v)))))
-
-
-
 (defn remove-derived-values
   "Derived values should be created by the system"
   [{:keys [properties]} doc]
@@ -93,21 +50,46 @@
     :map    [trail, (:properties prop-spec)]
     [trail]))
 
-(defn add-default-values [{:keys [properties]} doc]
-  "Like add-derived-values, but only when the doc is created"
+(defn walk-schema-with-stop [f]
+  (fn [trail prop-spec doc]
+    (if (f prop-spec)
+      [trail]
+      (walk-schema trail prop-spec doc))))
+
+(defn validate-properties2!
+  "Extra validation, run the :validate function"
+  [{:keys [name properties]} doc]
   (update-leafs-via-directive properties
-                              walk-schema
+                              (walk-schema-with-stop :validate)
+                              doc
+                              (fn [[prop-name] prop-spec v doc]
+                                (when-let [validate-fn (get prop-spec :validate)]
+                                  (when-let [errs (validate-fn v doc)]
+                                    (throw+ {:type     :tzbackend.future.domain.validation/validation-error
+                                             :property prop-name
+                                             :errors   errs})))
+                                v))
+  doc)
+
+(defn add-default-values
+  "Like add-derived-values, but only when the doc is created"
+  [{:keys [properties]} doc]
+  (update-leafs-via-directive properties
+                              (walk-schema-with-stop :default)
                               doc
                               (fn [_ prop-spec v doc]
                                 (when-let [default-fn (get prop-spec :default)]
-                                  (if (nil? v)
-                                    (default-fn doc))))))
+                                  (when (nil? v)
+                                    (if (fn? default-fn)
+                                      (default-fn doc)
+                                      default-fn))))))
 
-(defn add-derived-values [is-update?]
+(defn add-derived-values
   "Add values derived from other doc values."
+  [is-update?]
   (fn [{:keys [properties]} doc]
     (update-leafs-via-directive properties
-                                walk-schema
+                                (walk-schema-with-stop :derived)
                                 doc
                                 (fn [_ prop-spec v doc]
                                   (when-let [derive-fn (get prop-spec :derived)]
@@ -117,7 +99,7 @@
   "Collect computed values, for example cached values."
   [{:keys [properties]} doc]
   (update-leafs-via-directive properties
-                              walk-schema
+                              (walk-schema-with-stop :computed)
                               doc
                               (fn [_ prop-spec v doc]
                                 (when-let [compute-fn (get prop-spec :computed)]
@@ -135,6 +117,7 @@
             {}
             doc))
 
+;; todo: remove?
 (defn- add-ref-property-value [properties added-doc ref-docs]
   (map (fn [[property-name m]]
          (let [prefix  (-> properties
@@ -151,6 +134,7 @@
                  m)]))
        ref-docs))
 
+;; todo: remove?
 (defn- insert-ref-docs!* [host-doc properties ref-prop]
   (let [[prop-name docs] ref-prop]
     (let [{:keys [ref-resource pre-process]} (get properties prop-name)
@@ -161,19 +145,21 @@
           println ;; this one is needed! Why?!?!
           ))))
 
+;; todo: remove?
 (defn- insert-ref-docs! [properties doc added-doc]
   (let [ref-props  (->> (handle-ref-resources properties :filter doc)
                         (add-ref-property-value properties added-doc))]
     (doseq [ref-prop ref-props]
       (insert-ref-docs!* added-doc properties ref-prop))))
 
-(defn execute-insert! [{:keys [collection properties]} doc]
-  (let [core-doc   (handle-ref-resources properties :remove doc)
-        added-docs @(rel/conj! collection core-doc)
-        ]
-    (doseq [added-doc added-docs]
-      (insert-ref-docs! properties doc added-doc))
-    added-docs))
+(def execute-insert! ^{:skip-wrapper true}
+  (fn [{:keys [collection properties]} doc]
+    (let [docs       (if (map? doc) [doc] doc)
+          core-docs  (r/map (partial handle-ref-resources properties :remove) docs)
+          added-docs @(-> (m/conj! collection core-docs))
+          ]
+      (doall (map (partial insert-ref-docs! properties) docs added-docs))
+      added-docs)))
 
 (defn execute-update! [{:keys [collection restriction]} doc]
   @(rel/update-in! collection restriction doc))
@@ -184,35 +170,43 @@
 (defn execute-fetch [{:keys [collection restriction] :as dtc} _]
   @(rel/select collection restriction))
 
+;; todo: keep?
+(defn unpack-destroy-result [{:keys [collection]} doc]
+  ;(warn "unpack-destroy-result not implemented")
+  doc)
 
                                         ; AssemblyLines
 
-(defn- wrapper-f [f dom-type-collection docs]
-  (if (sequential? docs)
-    (map (partial f dom-type-collection) docs)
-    (f dom-type-collection docs)))
+(defn wrapper-f [f dom-type-factory docs]
+  (when-let [v (if (sequential? docs)
+                 (doall (map (partial f dom-type-factory) docs))
+                 (f dom-type-factory docs))]
+    (with-meta v (meta docs))))
 
-(def deref-steps [collect-computed,
-                  ;collect-referred
-                  ])
+(def deref-steps [collect-computed])
 
 (def destroy! (partial assembly-line
                        [:execute execute-destroy!
-                        :deref   deref-steps]
+                        :deref   []]
                        :environment))
 
 (def insert! (partial assembly-line
-                      [:validate     [validate-doc-input!, (partial validate-properties! false), validate-doc!]
+                      [:validate     [validate-doc-input!
+                                      (partial validate-properties! false)
+                                      validate-properties2!
+                                      validate-doc!]
                        :pre-process  [add-default-values (add-derived-values false)]
-                       :execute      [execute-insert!]
+                       :execute      execute-insert!
                        :deref        deref-steps]
                       :wrapper-f wrapper-f
                       :environment))
 
 (def update! (partial assembly-line
                       [:clean        [remove-derived-values, remove-collected-values]
-                       :updaters     apply-updaters
-                       :validate     [validate-doc-input!, (partial validate-properties! true), validate-doc!]
+                       :validate     [validate-doc-input!
+                                      (partial validate-properties! true)
+                                      validate-properties2!
+                                      validate-doc!]
                        :pre-process  (add-derived-values true)
                        :execute      execute-update!
                        :deref        deref-steps]

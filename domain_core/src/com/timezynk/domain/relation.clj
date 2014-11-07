@@ -7,9 +7,3 @@
   (conj! [this records])
   (disj! [this predicate])
   (update-in! [this predicate record]))
-
-(defmulti where* (fn [query & {:keys [db]}]
-                   (or db :default)))
-
-(defmacro where [clause]
-  (where* clause))
