@@ -1,4 +1,4 @@
-(defproject com.timezynk.domain.domain-core "0.2.0"
+(defproject com.timezynk.domain.domain-core "0.2.0-SNAPSHOT"
   :description "Core functionality of the domain project"
   :url "https://github.com/TimeZynk/domain/domain-core"
   :license {:name "Eclipse Public License"
