@@ -1,7 +1,8 @@
 (ns com.timezynk.domain.factory
   (:require [com.timezynk.domain.persistence      :as p]
             [com.timezynk.domain.assembly-line    :as line]
-            [com.timezynk.domain.relation         :as rel]))
+            [com.timezynk.domain.relation         :as rel]
+            [clojure.pprint :refer [pprint]]))
 
 (defrecord DomainTypeFactory [natural-names description name version restriction
                               collection collects properties validate-doc old-docs
@@ -22,7 +23,12 @@
           (line/prepare nil))))
 
   (p/project [this fields]
-    (rel/project collection fields))
+    (update-in this
+               [:collection]
+               rel/project
+               fields)
+    ;(rel/project collection fields)
+    )
 
   (p/conj! [this]
     (insert!-line this))
@@ -54,10 +60,21 @@
     (-> (p/update-in! this predicate)
         (line/prepare record))))
 
+(def collection-name
+  "Creates a collection name with optional version number and where - has been replaced by ."
+  (memoize
+   (fn [dtc]
+     (-> (str (-> (:name dtc)
+                  name
+                  (clojure.string/replace #"\-" (constantly ".")))
+              (get dtc :version ""))
+         keyword))))
+
 (defmethod print-method DomainTypeFactory [dtc ^java.io.Writer w]
   (let [p (fn [& args] (.write w (apply str args)))]
-    (p "DomainTypeCollection[" (:name dtc) "]")))
-
+    (p "DomainTypeCollection["
+       (name (collection-name dtc))
+       "]")))
 
 (comment "Deprecated? Place in a function named 'print-info', or something similar" defmethod print-method DomainTypeFactory [dtc ^java.io.Writer w]
   (let [{:keys [insert!-line

@@ -7,7 +7,8 @@
             [com.timezynk.domain.persistence            :as p]
             [com.timezynk.domain.relation               :as rel]
             [com.timezynk.domain.update-leafs           :refer [update-leafs, update-leafs-via-directive]]
-            [com.timezynk.domain.assembly-line :refer [assembly-line]]))
+            [com.timezynk.domain.assembly-line :refer [assembly-line]]
+            [clojure.pprint :refer [pprint]]))
 
 
                                         ; Steps
@@ -121,36 +122,6 @@
                               (fn [_ prop-spec v doc]
                                 (when-let [compute-fn (get prop-spec :computed)]
                                   (compute-fn doc)))))
-
-(comment defn- collect-referred-domain-objects [collection ids]
-  :todo)
-
-(comment defn- collect-referred-docs [collection ids unpack only-keys]
-  (let [one?     (not (sequential? ids))
-        ids      (if one? [ids] ids)
-        fetched  (um/fetch collection
-                           :where {:_id {:$in ids}})
-        unpacked (if unpack
-                   (map unpack fetched)
-                   fetched)
-        filtered (if (seq only-keys)
-                   (map #(select-keys % only-keys) unpacked)
-                   unpacked)]
-    (if one? (first filtered) filtered)))
-
-(comment defn collect-referred
-  "Collect referred documents"
-  [{:keys [collects properties]} doc]
-  (r/reduce (fn [doc prop-name {:keys [collection domain-type? unpack ref-property only-keys]}]
-              (let [ids (pack/pack-property [ref-property]
-                                            (get doc ref-property)
-                                            properties)]
-                (assoc doc prop-name
-                       (if domain-type?
-                         (collect-referred-domain-objects collection ids)
-                         (collect-referred-docs collection ids unpack only-keys)))))
-            doc
-            collects))
 
 (defn- handle-ref-resources [properties intention doc]
   (r/reduce (fn [doc k v]

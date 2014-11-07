@@ -7,8 +7,3 @@
   (conj! [this] [this records])
   (disj! [this] [this predicate])
   (update-in! [this] [this predicate] [this predicate record]))
-
-(defmacro ->1 [& steps]
-  `(-> ~@steps
-       deref
-       first))

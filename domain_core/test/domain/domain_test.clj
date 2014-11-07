@@ -1,14 +1,14 @@
 (ns domain.domain-test
-  (:require [clojure.test :refer :all]
-            [com.timezynk.domain :as dom]
-            [com.timezynk.domain.validation :as v]
-            [com.timezynk.domain.schema :as s]
-            [com.timezynk.domain.assembly-line :as line]
+  (:require [clojure.test                       :refer :all]
+            [com.timezynk.domain                :as dom]
+            [com.timezynk.domain.validation     :as v]
+            [com.timezynk.domain.schema         :as s]
+            [com.timezynk.domain.assembly-line  :as line]
             [com.timezynk.domain.standard-lines :as standard]
-            [com.timezynk.domain.relation :as rel]
-            [com.timezynk.domain.persistence :as p]
-            [slingshot.slingshot               :refer [throw+]]
-            [clojure.pprint :refer [pprint]])
+            [com.timezynk.domain.relation       :as rel]
+            [com.timezynk.domain.persistence    :as p]
+            [slingshot.slingshot                :refer [throw+]]
+            [clojure.pprint                     :refer [pprint]])
   (:import [org.joda.time LocalDateTime]))
 
 "
@@ -35,8 +35,6 @@ DomainTypeFactories are created via the defdomtype macro – the DomainTypeFacto
 (def DB (atom []))
 
 (defn add-docs [old neW]
-  (pprint old)
-  (pprint neW)
   (concat old neW))
 
 (defn create-mock-collection [restriction last-result]
@@ -51,7 +49,22 @@ DomainTypeFactories are created via the defdomtype macro – the DomainTypeFacto
 
     clojure.lang.IDeref
     (deref [this]
-      (or last-result @DB))))
+      (comment or last-result @DB)
+      (comment pprint (filter
+                       #(let [m (for [[pred-key pred-val] restriction
+                                      [key val]           %]
+                                  [key val])]
+                          (= restriction (into {} m)))
+                       @DB))
+      (or last-result
+          (filter
+           #(let [m ;; Stupid query engine
+                    (for [[pred-key pred-val] restriction
+                          [key val]           %
+                          :when               (and (= pred-key key) (= pred-val val))]
+                      [key val])]
+              (= restriction (into {} m)))
+           @DB)))))
 
 (defn mock-collection-factory [{:keys [name]}]
   (create-mock-collection nil nil))
@@ -94,7 +107,7 @@ DomainTypeFactories are created via the defdomtype macro – the DomainTypeFacto
   (is (satisfies? p/Persistence bars)))
 
 "
-You can get the assembly lines from the intantiated dom-type
+You can get the assembly lines from the instantiated dom-type
 "
 
 (deftest get-assembly-lines
@@ -110,8 +123,8 @@ Use conj! to add a new document:"
 
 (deftest add-document-to-collection
   (let [document {:counter 2
-                  :start (LocalDateTime. 2014 1 1 10 0)
-                  :end   (LocalDateTime. 2015 1 1 10 0)}]
+                  :start (LocalDateTime. 2012 1 1 10 0)
+                  :end   (LocalDateTime. 2013 1 1 10 0)}]
     (is (= document @(dom/conj! bars document)))))
 
 
@@ -121,8 +134,8 @@ into the collection. If we remove the mandatory counter parameter it will theref
 throw an exception."
 
 (deftest validation-error
-  (let [document {:start (LocalDateTime. 2014 1 1 10 0)
-                  :end   (LocalDateTime. 2015 1 1 10 0)}]
+  (let [document {:start (LocalDateTime. 2013 1 1 10 0)
+                  :end   (LocalDateTime. 2014 1 1 10 0)}]
     (is (thrown? Exception @(dom/conj! bars document)))))
 
 
@@ -135,19 +148,18 @@ throw an exception."
                     :counter 2}
                    {:start   (LocalDateTime. 2014 1 2 10 0)
                     :end     (LocalDateTime. 2014 1 2 11 0)
-                    :counter 1}]]
-    (is (= documents @(dom/conj! bars documents)))))
-
-
+                    :counter 1}]
+        res       @(dom/conj! bars documents)]
+    (is (= documents res))
+    (is (= 3 (count @(dom/select bars {}))))
+    (is (= 1 (count @(dom/select bars {:counter 1}))))))
 
 "To fetch documents use select."
 
-(deftest find-all-documents
+(comment deftest find-all-documents
   (is (= 3 (count @(dom/select bars {})))))
 
-
-(deftest find-restricted-selection
-  (pprint @DB)
+(comment deftest find-restricted-selection
   (is (= nil @(dom/select bars {:counter 1}))))
 
 (comment
