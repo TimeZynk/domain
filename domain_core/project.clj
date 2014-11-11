@@ -11,4 +11,5 @@
                  [joda-time "2.1"]
                  [potemkin "0.3.11"]
                  [org.mongodb/mongo-java-driver "2.10.1"] ;used by validation, should be removed?
-                 [com.timezynk.domain/assembly-line "0.2.0"]])
+                 [com.timezynk.domain/assembly-line "0.2.0"]
+                 [slingshot "0.12.1"]])

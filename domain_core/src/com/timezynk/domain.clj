@@ -4,10 +4,10 @@
   (:require [com.timezynk.domain.validation        :as v]
             [com.timezynk.domain.schema            :as s]
             [com.timezynk.domain.pack              :as pack]
-            [com.timezynk.domain.factory           :as factory]
+            [com.timezynk.domain.factory           :refer [map->DomainTypeFactory]]
             [com.timezynk.domain.standard-lines    :as standard]
-            [com.timezynk.domain persistence relation assembly-line]
-            [potemkin :as pk]))
+            [potemkin                              :as pk]
+            [com.timezynk.domain persistence relation assembly-line]))
 
 ; Constructor
 
@@ -18,7 +18,7 @@
            (get options :name)
            (get options :collection-factory)]}
 
-    (factory/map->DomainTypeFactory
+    (map->DomainTypeFactory
       (-> {:update!-line  standard/update!
            :insert!-line  standard/insert!
            :destroy!-line standard/destroy!
@@ -30,12 +30,14 @@
 (defmacro defdomtype [n & opts]
   `(def ~n (dom-type ~@opts)))
 
-;Aliases
 
+;Aliases
 (pk/import-vars
   [com.timezynk.domain.assembly-line execute! add-stations]
-  [com.timezynk.domain.relation where]
   [com.timezynk.domain.persistence conj! select project disj! update-in!])
 
-(defn find-by-id [dom-type-factory id]
-  (first @(select dom-type-factory (#'where (= :id id)))))
+(defn by-vid [factory vid]
+  (first @(select factory {:vid vid})))
+
+(defn by-id [factory id]
+  (first @(select factory {:id id})))

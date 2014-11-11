@@ -32,7 +32,7 @@ implementation of the Relation protocol.
 DomainTypeFactories are created via the defdomtype macro – the DomainTypeFactory constructor.
 "
 
-(def DB (atom []))
+(def  ^:dynamic *DB*)
 
 (defn add-docs [old neW]
   (concat old neW))
@@ -41,7 +41,7 @@ DomainTypeFactories are created via the defdomtype macro – the DomainTypeFacto
   (reify
     rel/Relation
     (rel/conj! [this document]
-      (swap! DB conj document)
+      (swap! *DB* conj document)
       (create-mock-collection restriction document))
 
     (rel/select [this predicate]
@@ -49,22 +49,22 @@ DomainTypeFactories are created via the defdomtype macro – the DomainTypeFacto
 
     clojure.lang.IDeref
     (deref [this]
-      (comment or last-result @DB)
+      (comment or last-result @*DB*)
       (comment pprint (filter
                        #(let [m (for [[pred-key pred-val] restriction
                                       [key val]           %]
                                   [key val])]
                           (= restriction (into {} m)))
-                       @DB))
+                       @*DB*))
       (or last-result
           (filter
            #(let [m ;; Stupid query engine
-                    (for [[pred-key pred-val] restriction
-                          [key val]           %
-                          :when               (and (= pred-key key) (= pred-val val))]
-                      [key val])]
+                  (for [[pred-key pred-val] restriction
+                        [key val]           %
+                        :when               (and (= pred-key key) (= pred-val val))]
+                    [key val])]
               (= restriction (into {} m)))
-           @DB)))))
+           @*DB*)))))
 
 (defn mock-collection-factory [{:keys [name]}]
   (create-mock-collection nil nil))
@@ -122,10 +122,11 @@ You can get the assembly lines from the instantiated dom-type
 Use conj! to add a new document:"
 
 (deftest add-document-to-collection
-  (let [document {:counter 2
-                  :start (LocalDateTime. 2012 1 1 10 0)
-                  :end   (LocalDateTime. 2013 1 1 10 0)}]
-    (is (= document @(dom/conj! bars document)))))
+  (binding [*DB* (atom [])]
+    (let [document {:counter 2
+                    :start (LocalDateTime. 2012 1 1 10 0)
+                    :end   (LocalDateTime. 2013 1 1 10 0)}]
+      (is (= document @(dom/conj! bars document))))))
 
 
 
@@ -134,33 +135,52 @@ into the collection. If we remove the mandatory counter parameter it will theref
 throw an exception."
 
 (deftest validation-error
-  (let [document {:start (LocalDateTime. 2013 1 1 10 0)
-                  :end   (LocalDateTime. 2014 1 1 10 0)}]
-    (is (thrown? Exception @(dom/conj! bars document)))))
+  (binding [*DB* (atom [])]
+    (let [document {:start (LocalDateTime. 2013 1 1 10 0)
+                    :end   (LocalDateTime. 2014 1 1 10 0)}]
+      (is (thrown? Exception @(dom/conj! bars document))))))
 
 
 
 "You can add several documents at once."
 
 (deftest add-several-at-once
-  (let [documents [{:start   (LocalDateTime. 2014 1 1 10 0)
-                    :end     (LocalDateTime. 2014 1 1 11 0)
-                    :counter 2}
-                   {:start   (LocalDateTime. 2014 1 2 10 0)
-                    :end     (LocalDateTime. 2014 1 2 11 0)
-                    :counter 1}]
-        res       @(dom/conj! bars documents)]
-    (is (= documents res))
-    (is (= 3 (count @(dom/select bars {}))))
-    (is (= 1 (count @(dom/select bars {:counter 1}))))))
+  (binding [*DB* (atom [])]
+    (let [documents [{:start   (LocalDateTime. 2014 1 1 10 0)
+                      :end     (LocalDateTime. 2014 1 1 11 0)
+                      :counter 2}
+                     {:start   (LocalDateTime. 2014 1 2 10 0)
+                      :end     (LocalDateTime. 2014 1 2 11 0)
+                      :counter 1}]
+          res       @(dom/conj! bars documents)]
+      (is (= documents res)))))
+
 
 "To fetch documents use select."
 
-(comment deftest find-all-documents
-  (is (= 3 (count @(dom/select bars {})))))
+(deftest find-all-documents
+  (binding [*DB* (atom [{:start   (LocalDateTime. 2014 1 1 10 0)
+                         :end     (LocalDateTime. 2014 1 1 11 0)
+                         :counter 2}
+                        {:start   (LocalDateTime. 2014 1 1 10 0)
+                         :end     (LocalDateTime. 2014 1 1 11 0)
+                         :counter 2}
+                        {:start   (LocalDateTime. 2014 1 2 10 0)
+                         :end     (LocalDateTime. 2014 1 2 11 0)
+                         :counter 1}])]
+    (is (= 3 (count @(dom/select bars {}))))))
 
-(comment deftest find-restricted-selection
-  (is (= nil @(dom/select bars {:counter 1}))))
+(deftest find-restricted-selection
+  (binding [*DB* (atom [{:start   (LocalDateTime. 2014 1 1 10 0)
+                         :end     (LocalDateTime. 2014 1 1 11 0)
+                         :counter 2}
+                        {:start   (LocalDateTime. 2014 1 1 10 0)
+                         :end     (LocalDateTime. 2014 1 1 11 0)
+                         :counter 2}
+                        {:start   (LocalDateTime. 2014 1 2 10 0)
+                         :end     (LocalDateTime. 2014 1 2 11 0)
+                         :counter 1}])]
+    (is (= 1 @(dom/select bars {:counter 1})))))
 
 (comment
 "To update documents, use update-in! Note, you can update several documents at once!"

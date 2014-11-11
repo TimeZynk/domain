@@ -1,14 +1,15 @@
 (ns com.timezynk.domain.standard-lines
   "Useful steps to add to assembly lines in tzbackend.future.domain"
-  (:require [clojure.core.reducers              :as r]
-            [com.timezynk.domain.validation             :as v]
-            [com.timezynk.domain.pack                   :as pack]
+  (:require [clojure.core.reducers             :as r]
+            [com.timezynk.domain.validation    :as v]
+            [com.timezynk.domain.pack          :as pack]
             [com.timezynk.domain.assembly-line :as line]
-            [com.timezynk.domain.persistence            :as p]
-            [com.timezynk.domain.relation               :as rel]
-            [com.timezynk.domain.update-leafs           :refer [update-leafs, update-leafs-via-directive]]
+            [com.timezynk.domain.persistence   :as p]
+            [com.timezynk.domain.relation      :as rel]
+            [com.timezynk.domain.update-leafs  :refer [update-leafs, update-leafs-via-directive]]
             [com.timezynk.domain.assembly-line :refer [assembly-line]]
-            [clojure.pprint :refer [pprint]]))
+            [slingshot.slingshot               :refer [throw+]]
+            [clojure.pprint                    :refer [pprint]]))
 
 
                                         ; Steps
@@ -156,7 +157,7 @@
   (fn [{:keys [collection properties]} doc]
     (let [docs       (if (map? doc) [doc] doc)
           core-docs  (r/map (partial handle-ref-resources properties :remove) docs)
-          added-docs @(-> (m/conj! collection core-docs))
+          added-docs (->> (rel/conj! collection core-docs) deref (into []))
           ]
       (doall (map (partial insert-ref-docs! properties) docs added-docs))
       added-docs)))
