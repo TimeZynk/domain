@@ -180,7 +180,7 @@ throw an exception."
                         {:start   (LocalDateTime. 2014 1 2 10 0)
                          :end     (LocalDateTime. 2014 1 2 11 0)
                          :counter 1}])]
-    (is (= 1 @(dom/select bars {:counter 1})))))
+    (is (= 1 (count @(dom/select bars {:counter 1}))))))
 
 (comment
 "To update documents, use update-in! Note, you can update several documents at once!"
