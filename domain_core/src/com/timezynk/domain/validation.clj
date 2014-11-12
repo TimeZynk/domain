@@ -1,15 +1,8 @@
 (ns com.timezynk.domain.validation
-  "This namespace is copied from tzbackend.util.schema.validation."
   (:require [clojure.set                       :refer [union]]
-            ;[clojure.tools.logging             :as log :refer [spy info warn]]
             [clojure.core.reducers             :as r]
-
-
-
             [slingshot.slingshot               :refer [throw+]]
-            [clojure.set                       :refer [difference]]
-            ;[validateur.validation             :as v]
-            )
+            [clojure.set                       :refer [difference]])
   (:import [org.bson.types ObjectId]
            [org.joda.time LocalDateTime LocalDate LocalTime]))
 
@@ -27,14 +20,13 @@
         [true {}]
         [false (->> results
                     (map second)
-                                        ;(reduce union)
                     error-func)]))))
 
 (defn all-of
   "All conditions should be true (AND)"
   [& rules]
   (validation-operator (fn [results] (reduce #(and % %2) results))
-                       (fn [errs] {:and errs})
+                       (fn [errs] (apply merge errs))
                        rules))
 
 (defn- some-of-proto [treshold-func err-wrap-name rules]
@@ -64,6 +56,18 @@
 
 ;;;;;;;;;;;;; Compare ;;;;;;;;;;;
 
+(defn <or= [a b]
+  (<= (compare a b) 0))
+
+(defn >or= [a b]
+  (>= (compare a b) 0))
+
+(defn >not= [a b]
+  (> (compare a b) 0))
+
+(defn <not= [a b]
+  (< (compare a b) 0))
+
 (defprotocol Compare
   (lt*  [x y] "x is less than y?")
   (lt=* [x y] "x is less than or equals y")
@@ -85,7 +89,7 @@
 
 (defn- only-compare-existing-values [val-a val-b f]
   (if-not (and val-a val-b)
-    [true #{}]
+    [true {}]
     (f)))
 
 (defn- compare-rule [compare-f message-f prop-a prop-b]
@@ -114,7 +118,7 @@
                               (difference (into #{} valid-attributes))))]
       (if (empty? invalid-attrs)
         [true {}]
-        [false {:invalid-attrs #{(str invalid-attrs " are invalid attributes on this entry")}}]))))
+        [false (apply merge (map (fn [attr] {attr "invalid attribute"}) invalid-attrs))]))))
 
 (defn presence-of
   "From validateur"
@@ -154,10 +158,10 @@
 (defn check [fun attr-name msg]
   (fn [val]
     (if (nil? val)
-      [false #{{:attr attr-name :error "required property has no value"}}]
+      [false {attr-name "required property has no value"}]
       (if (fun val)
-        [true #{}]
-        [false #{{:attr attr-name :error msg}}]))))
+        [true {}]
+        [false {attr-name msg}]))))
 
 (defn str->object-id? [s]
   (or (instance? ObjectId s)
@@ -196,21 +200,17 @@
         :boolean   (check boolean?    attr-name "not a boolean")
         :any       (fn [_] [true #{}])}
        type-name
-       [false #{(str "property '" (name attr-name) "' of unknown type '" (name type-name) "'")}]))
+       [false {attr-name {"unknown type" (name type-name)}}]))
 
 (defn validate-vector [all-optional? attr-name rule vector-value]
-  (let [result (map (partial
-                     validate-schema all-optional?
-                     rule)
-                    vector-value)
-        valid? (if (empty? result)
-                    true
-                    (->> result
-                         (map first)
-                         (reduce #(and % %2))))]
-    (if valid?
-        [true {}]
-        [false {attr-name result}])))
+  (let [[valid? errors] (r/reduce
+                          (fn [acc v]
+                            (let [[v? e] (validate-schema all-optional? rule v)]
+                              [(and (first acc) v?)
+                               (merge (second acc) e)]))
+                          [true {}]
+                          vector-value)]
+    [valid? {attr-name errors}]))
 
 (defn get-check-fn [all-optional? k property-name property-definition]
 
@@ -319,6 +319,7 @@
     (when-not valid?
       (throw+ {:type    ::validation-error
                :message "The document have invalid properties."
+               :document doc
                :errors  err-messages}))))
 
 (defn validate-doc!
@@ -329,3 +330,5 @@
       (throw+ {:type    ::validation-error
                :message "The document is invalid."
                :errors  err-messages}))))
+
+(def validation-error ::validation-error)

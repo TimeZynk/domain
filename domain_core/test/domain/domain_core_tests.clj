@@ -216,6 +216,13 @@ DomainTypeFactories are created via the defdomtype macro – the DomainTypeFacto
        ;; todo Test nested pack-functionality
        )
 
+(facts "The input is validated"
+
+       ;; todo write tests!
+       ;;; - on property level
+       ;;; - on document level
+
+       )
 
 ;; Todo: Test HTTP layer. This might actually be an own project ...
 ;; ================================================================

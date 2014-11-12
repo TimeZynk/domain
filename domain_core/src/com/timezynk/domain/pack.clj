@@ -21,13 +21,13 @@
 ;; (defn- replace-with-mongo-operators [q]
 ;;   (postwalk-replace mongo-operators q))
 
-;; (defn- operator? [key]
-;;   (->> key name (re-matches #"^_.*_$")))
+(defn- operator? [key]
+  (->> key name (re-matches #"^_.*_$")))
 
-;; (defn- clean-property-path [path]
-;;   (remove #(or (= [] %)
-;;                (operator? %))
-;;           path))
+(defn- clean-property-path [path]
+  (remove #(or (= [] %)
+               (operator? %))
+          path))
 
 (defn get-type-path
   "From a path, created by update-leafs,
