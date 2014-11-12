@@ -16,6 +16,8 @@
   ([options default-properties]
     {:pre [(get options :properties)
            (get options :name)
+           ;; What about another term for a factory, since
+           ;; we already use that term inside of domain?
            (get options :collection-factory)]}
 
     (map->DomainTypeFactory
@@ -34,7 +36,8 @@
 ;Aliases
 (pk/import-vars
   [com.timezynk.domain.assembly-line execute! add-stations]
-  [com.timezynk.domain.persistence conj! select project disj! update-in!])
+  [com.timezynk.domain.persistence conj! select project disj! update-in!]
+  [com.timezynk.domain.pack pack-doc])
 
 (defn by-vid [factory vid]
   (first @(select factory {:vid vid})))
