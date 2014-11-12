@@ -20,9 +20,9 @@
 (def string    (t :string))
 (def number    (t :number))
 (def boolean   (t :boolean))
-(def date      (t :date))
-(def date-time (t :date-time))
-(def time      (t :time))
+(def date      (t :date)) ;; remove?
+(def date-time (t :date-time)) ;; remove?
+(def time      (t :time)) ;; remove?
 (def timestamp (t :timestamp))
 (def any       (t :any))
 

@@ -46,9 +46,8 @@
           parent-path          (if is-vector?
                                  path
                                  (-> sub-trail rest reverse))
-          parent-exists?       (or (= 1 (count path))
-                                   (get-in x
-                                           parent-path))
+          parent-exists?       (or false ;(= 1 (count path)) what does this do?
+                                   (get-in x parent-path))
           x                    (if parent-exists?
                                  (let [old-v (get-in x path)
                                        new-v (apply upd-fun trail dir-v old-v x args)]
@@ -57,12 +56,12 @@
                                      x))
                                  x)
           x                    (if sub-dir
-                                 (if is-vector?
+                                 (if (and is-vector? parent-exists?)
                                    (update-in x
                                               parent-path
                                               (fn [y]
                                                 (map
-                                                 #(walk-directives sub-dir ; this works: (:properties sub-dir)
+                                                 #(walk-directives sub-dir
                                                                    dir-fun
                                                                    ()
                                                                    %
@@ -70,7 +69,8 @@
                                                                    args)
                                                  y)))
                                    (walk-directives sub-dir dir-fun trail x upd-fun args))
-                                 x)]
+                                 x)
+          ]
       x)))
 
 (defn- walk-directives [dirs dir-fun p x upd-fun args]
