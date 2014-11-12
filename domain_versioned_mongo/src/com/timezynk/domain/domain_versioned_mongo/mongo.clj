@@ -1,4 +1,4 @@
-(ns domain-versioned-mongo.mongo
+(ns com.timezynk.domain.domain-versioned-mongo.mongo
   "A persistence layer aimed at MongoDB with versioned collection"
   (:require ;[clojure.tools.logging          :as log :refer [spy info warn]]
             [clojure.core.reducers          :as r]
@@ -11,7 +11,8 @@
             ;; mchan disabled to start with.
             ;[domain-versioned-mongo.channel :as mchan]
             [com.timezynk.domain.relation           :as rel]
-            domain-versioned-mongo.predicates)
+            ;domain-versioned-mongo.predicates
+            )
   (:import [org.bson.types ObjectId]
            [org.joda.time LocalDateTime]))
 
@@ -41,14 +42,8 @@
     exists domain-versioned-mongo.predicates/exists
     in   domain-versioned-mongo.predicates/in})
 
-(defmethod rel/where* :default [clause]
-  (postwalk-replace predicate-symbols clause))
 
-(defmacro where [clause]
-  (rel/where* clause))
-
-
-                                        ; Apply Updaters
+                                        ;Apply Updaters
 
 (declare map-leaf-walk)
 

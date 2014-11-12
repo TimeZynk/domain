@@ -1,7 +1,7 @@
-(ns domain-versioned-mongo.mongo-collection
+(ns com.timezynk.domain.domain-versioned-mongo.mongo-collection
   (:refer-clojure :exclude [conj! disj!])
-  (:require [com.timezynk.domain.relation         :as rel]
-            [domain-versioned-mongo.mongo :as m]))
+  (:require [com.timezynk.domain.relation :as rel]
+            [com.timezynk.domain.domain-versioned-mongo.mongo :as m]))
 
 (def ^:dynamic *debug* false)
 
@@ -9,7 +9,7 @@
  It might be possible to migrate to a relational database in the future via this relationship."
 
 (defrecord MongoCollection [cname persistence-protocol restriction projection-keys
-                            log query-result]
+                            log query-result old-docs]
 
   clojure.lang.IDeref
   (deref [this]
@@ -20,20 +20,23 @@
              (when projection-keys [:only projection-keys]))))
 
   rel/Relation
-  (rel/select [this predicate]
+  (select [this predicate]
     (update-in this [:restriction] merge predicate))
 
-  (rel/project [this fields]
-    (update-in this [:projection-keys] concat fields))
+  (project [this fields]
+    (update-in this
+               [:projection-keys]
+               concat
+               (conj fields :_name)))
 
-  (rel/conj! [this docs]
+  (conj! [this docs]
     (let [created (m/insert! cname
-                             (if (sequential? docs) docs [docs]))]
+                           (if (map? docs) [docs] docs))]
       (-> this
           (assoc :query-result created)
           (update-in [:log :conj!-result] conj created))))
 
-  (rel/disj! [this predicate]
+  (disj! [this predicate]
     (let [restriction (merge restriction predicate)
           wresult     (m/destroy! cname restriction)]
       (-> this
@@ -41,14 +44,14 @@
                  :restriction  restriction)
           (update-in [:log :disj!-result] conj wresult))))
 
-  (rel/update-in! [this predicate new-doc old-records]
+  (update-in! [this predicate new-doc]
     (let [restriction (merge restriction predicate)
-          result      (m/update! cname restriction new-doc old-records)]
+          result      (m/update! cname restriction new-doc)
+          ]
       (-> this
           (assoc :query-result result
                  :restriction  restriction)
           (update-in [:log :update-in!-result] conj result)))))
-
 
 (defmethod print-method MongoCollection [mcol ^java.io.Writer w]
   (when *debug*
@@ -58,6 +61,8 @@
                  (:cname mcol)
                  " :where "
                  (or (:restriction mcol) {}))))
+
+(prefer-method clojure.pprint/code-dispatch clojure.lang.IPersistentMap clojure.lang.IDeref)
 
 (defn mongo-collection [cname]
   (map->MongoCollection {:cname       cname
