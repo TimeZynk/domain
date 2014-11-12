@@ -150,8 +150,10 @@
 (comment defmethod pack-property :time [_ v props]
   (ud/->local-time v))
 
-(comment defmethod pack-property :date-time [_ v props]
-  (ud/->local-datetime v))
+;; Todo: Remove the dependecy of joda
+(defmethod pack-property :date-time [_ v props]
+  ;(ud/->local-datetime v)
+  (org.joda.time.LocalDateTime. v))
 
 (defmethod pack-property :number [_ v props]
   (if (string? v)
