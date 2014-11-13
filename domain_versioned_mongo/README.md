@@ -4,7 +4,7 @@ A wrapper around [Congomongo](http://github.com/aboekhoff/congomongo). Makes the
 
 ## Usage
 
-[![Clojars Project](http://clojars.org/com.timezynk.domain/domain-versioned-mongo/latest-
+[![Clojars Project](http://clojars.org/com.timezynk.domain/domain-versioned-mongo/latest-version.svg)](http://clojars.org/com.timezynk.domain/domain-versioned-mongo)
 
 ## License
 
