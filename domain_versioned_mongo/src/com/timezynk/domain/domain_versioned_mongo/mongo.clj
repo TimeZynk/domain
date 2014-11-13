@@ -29,6 +29,9 @@
 (def ids-in {:id :_name, :vid :_id, :pid :_pid, "vid" :_id})
 (def ids-out {:_name :id, :_id :vid, :_pid :pid})
 
+(defn now* []
+  (System/currentTimeMillis))
+
 (def predicate-symbols
   '{=    domain-versioned-mongo.predicates/=*
     !=   domain-versioned-mongo.predicates/!=*
@@ -94,7 +97,7 @@
                    (map rename-ids-in)
                    (map #(merge {:_name (ObjectId.)}
                                 %
-                                {:valid-from (System/currentTimeMillis)
+                                {:valid-from (now*)
                                  :valid-to   nil})))
           new (mongo/insert! cname new :many true)
           new (map rename-ids-out new)]
@@ -105,12 +108,19 @@
   (let [oldies (mongo/fetch cname :where (assoc restriction :valid-to nil))]
     (if (sequential? oldies) oldies [oldies])))
 
+(defn update-oldie!* [db cname q v]
+  (future ; was a go
+    (mongo/with-mongo db
+      (mongo/update! cname q v
+                     :multiple true
+                     :upsert false))))
+
 (defn update! [cname restriction new-doc]
   (mongo/with-mongo db
     (let [restriction (postwalk-replace ids-in restriction)
           oldies      (get-old-docs cname restriction)
           old-ids     (map :_id oldies)
-          now         (System/currentTimeMillis)
+          now         (now*)
           new-doc     (dissoc (rename-ids-in new-doc) :_id :_pid)
           create-new  (fn [old] (-> (dissoc old :_id)
                                    (merge (apply-updaters old new-doc))
@@ -121,21 +131,17 @@
           newlings    (mongo/insert! cname
                                      newlings
                                      :many true)
-          _           (future ; was a go
-                        (mongo/with-mongo db
-                          (mongo/update! cname
-                                         {:_id {:$in old-ids}
-                                          :valid-to nil}
-                                         {:$set {:valid-to now}}
-                                         :multiple true
-                                         :upsert false)))
+          _           (update-oldie!* db cname
+                                      {:_id      {:$in old-ids}
+                                       :valid-to nil}
+                                      {:$set {:valid-to now}})
           newlings    (map rename-ids-out newlings)]
       ;(mchan/put! :update cname newlings oldies)
       newlings)))
 
 (defn destroy! [cname restriction]
   (mongo/with-mongo db
-    (let [now     (System/currentTimeMillis)
+    (let [now     (now*)
           query   (->> restriction
                        (postwalk-replace ids-in)
                        (merge {:valid-to nil}))
@@ -147,7 +153,7 @@
           deleted (mongo/fetch cname
                                :where (assoc query :valid-to now))]
       ;(mchan/put! :delete cname (spy deleted))
-      (.getN result))))
+      result)))
 
 (defn fetch [cname restriction & options]
   (mongo/with-mongo db
