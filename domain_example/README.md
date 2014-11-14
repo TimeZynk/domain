@@ -1,13 +1,9 @@
 # domain-example
 
-A Clojure library designed to ... well, that part is up to you.
-
-## Usage
-
-FIXME
+An example project using Domain.
 
 ## License
 
-Copyright © 2014 FIXME
+Copyright © 2014 TimeZynk AB
 
-Distributed under the Eclipse Public License, the same as Clojure.
+Distributed under the BSD 3-Clause License.

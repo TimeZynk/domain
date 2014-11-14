@@ -1,4 +1,4 @@
-(defproject com.timezynk.domain/domain-versioned-mongo "0.2.0"
+(defproject com.timezynk.domain/domain-versioned-mongo "0.2.1-SNAPSHOT"
   :description "Wrapper around congomongo. Works with domain."
   :url "https://github.com/TimeZynk/domain/tree/master/domain_versioned_mongo"
   :license {:name "Eclipse Public License"

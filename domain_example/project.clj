@@ -1,4 +1,4 @@
-(defproject com.timezynk.domain.domain-example "0.1.0"
+(defproject com.timezynk.domain/domain-example "0.2.1"
 
   :description "An example project, showing off domain"
 
@@ -9,8 +9,8 @@
 
   :dependencies [[org.clojure/clojure "1.5.1"]
                  [ring/ring-servlet "1.2.0-beta1"]
-                 [com.timezynk.domain.domain-core "0.1.0"]
-                 [com.timezynk.domain.domain-versioned-mongo "0.1.0"]
+                 [com.timezynk.domain/domain-core "0.2.1-SNAPSHOT"]
+                 [com.timezynk.domain/domain-versioned-mongo "0.2.1-SNAPSHOT"]
                  [org.clojure/tools.logging "0.2.4"]]
 
   :repl-options {:init (do (use 'clojure.stacktrace
