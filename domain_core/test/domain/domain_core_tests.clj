@@ -105,7 +105,9 @@ DomainTypeFactories are created via the defdomtype macro – the DomainTypeFacto
                               :end     (LocalDateTime. 2013 1 1 10 0)}]
                @(dom/conj! bars document) => document
                (provided
-                (rel/conj! mock-coll anything) => (future [document]))))
+                (rel/conj! mock-coll
+                           (as-checker sequential?))
+                => (future [document]))))
 
        ;; Todo: The validation functionality should be tested much more
        (fact "Throw an exception if the input is invalid."
@@ -124,7 +126,7 @@ DomainTypeFactories are created via the defdomtype macro – the DomainTypeFacto
                @(dom/conj! bars documents)
                => documents
                (provided
-                (rel/conj! mock-coll anything) => (future documents)))))
+                (rel/conj! mock-coll (as-checker sequential?)) => (future documents)))))
 
 (facts "Execute the select assembly line to fetch documents"
 

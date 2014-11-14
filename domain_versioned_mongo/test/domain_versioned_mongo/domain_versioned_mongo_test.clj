@@ -1,5 +1,6 @@
 (ns domain-versioned-mongo.domain-versioned-mongo-test
   (:require [midje.sweet                                                 :refer :all]
+            [clojure.core.reducers                                       :as r]
             [somnium.congomongo                                          :as mongo]
             [com.timezynk.domain.domain-versioned-mongo.mongo            :as vm]
             [com.timezynk.domain.domain-versioned-mongo.mongo-collection :as mc]

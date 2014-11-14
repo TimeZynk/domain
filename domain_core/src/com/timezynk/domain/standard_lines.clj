@@ -158,9 +158,7 @@
     (let [single-doc? (map? doc)
           docs        (if single-doc? [doc] doc)
           core-docs   (r/map (partial handle-ref-resources properties :remove) docs)
-          res         @(rel/conj! collection core-docs)
-          added-docs  (into [] res)
-          ]
+          added-docs  @(rel/conj! collection (into [] core-docs))]
       (doall (map (partial insert-ref-docs! properties) docs added-docs))
       (if single-doc? (first added-docs) added-docs))))
 
