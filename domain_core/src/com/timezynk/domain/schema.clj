@@ -8,17 +8,57 @@
             [com.timezynk.domain.validation   :as v :refer [validate-type]]
             [com.timezynk.domain.pack         :as pack :refer [pack-property]]))
 
-
-                                        ; "Annotators"
-
 (defn t [type]
   (fn [& {:as options}]
     (merge {:type type} options)))
 
-(def string    (t :string))
-(def number    (t :number))
-(def boolean   (t :boolean))
-(def timestamp (t :timestamp))
+(defn defproptype* [kword validate-fn msg-str pack-fn]
+  (defmethod validate-type kword [_]
+    [validate-fn msg-str])
+  (defmethod pack-property kword [_ v _]
+    (pack-fn v))
+  (t kword))
+
+(defmacro defproptype [n validate-fn msg-str pack-fn]
+  (let [kword (keyword n)]
+    `(def ~n
+       (defproptype* ~kword
+         ~validate-fn
+         ~msg-str
+         ~pack-fn))))
+
+
+                                        ; Standard Types
+
+(defproptype string
+  string? "not a string"
+  #(when %
+     (if (string? %)
+       (let [^String trimmed (s/trim %)]
+         (when-not (.isEmpty ^String trimmed) trimmed))
+       (.toString %))))
+
+(defproptype number
+  number? "not a number"
+  #(if (string? %)
+     (edn/read-string %)
+     %))
+
+(defproptype boolean
+  #(or (true? %) (false? %)) "not a boolean"
+  #(if (string? %)
+     (edn/read-string %)
+     (if % true false)))
+
+(defproptype timestamp
+  #(and (number? %) (<= 0 %)) "not a valid timestamp"
+  #(if (string? %)
+     (edn/read-string %)
+     %))
+
+                                        ; "Annotators"
+
+
 (def any       (t :any))
 
 (defn vector [children & options]
@@ -34,28 +74,11 @@
 
                                         ; Validation
 
-(defmethod validate-type :string [_]
-  [string? "not a string"])
-
-(defmethod validate-type :number [_]
-  [number? "not a number"])
-
 (defmethod validate-type :vector [_]
   [sequential? "not sequential"])
 
 (defmethod validate-type :map [_]
   [map? "not a map"])
-
-(defn timestamp? [x]
-  (and (number? x) (<= 0 x)))
-
-(defmethod validate-type :timestamp [_]
-  [timestamp? "not a valid timestamp"])
-
-(defn boolean? [s] (or (true? s) (false? s)))
-
-(defmethod validate-type :boolean [_]
-  [boolean? "not a boolean"])
 
 (defmethod validate-type :any [_]
   [(fn [_] true) ""])
@@ -65,27 +88,17 @@
 
 (defmethod pack-property :any [_ v props] v)
 
-(defmethod pack-property :string [_ v props]
-  (when v
-    (if (string? v)
-      (let [^String trimmed (s/trim v)]
-        (when-not (.isEmpty ^String trimmed) trimmed))
-      (.toString v))))
+;; (defmethod pack-property :string [_ v props]
+;;   (when v
+;;     (if (string? v)
+;;       (let [^String trimmed (s/trim v)]
+;;         (when-not (.isEmpty ^String trimmed) trimmed))
+;;       (.toString v))))
 
 (defmethod pack-property :number [_ v props]
   (if (string? v)
     (edn/read-string v)
     v))
-
-(defmethod pack-property :timestamp [_ v props]
-  (if (string? v)
-    (edn/read-string v)
-    v))
-
-(defmethod pack-property :boolean [_ v props]
-  (if (string? v)
-    (edn/read-string v)
-    (if v true false)))
 
 (defmethod pack-property :vector [_ v props]
   v)
