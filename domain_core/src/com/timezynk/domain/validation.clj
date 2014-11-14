@@ -2,9 +2,10 @@
   (:require [clojure.set                       :refer [union]]
             [clojure.core.reducers             :as r]
             [slingshot.slingshot               :refer [throw+]]
-            [clojure.set                       :refer [difference]])
-  (:import [org.bson.types ObjectId]
-           [org.joda.time LocalDateTime LocalDate LocalTime]))
+            [clojure.set                       :refer [difference]]))
+
+;; (:import [org.bson.types ObjectId]
+;;            [org.joda.time LocalDateTime LocalDate LocalTime])
 
 (declare validate-schema)
 
@@ -73,19 +74,19 @@
   (lt=* [x y] "x is less than or equals y")
   (eq*  [x y] "x equals y"))
 
-(extend-protocol Compare
-  LocalDateTime
-  (lt*  [x y] (.isBefore x y))
-  (lt=* [x y] (or (.isBefore x y) (= x y)))
-  (eq*  [x y] (= x y))
-  LocalDate
-  (lt*  [x y] (.isBefore x y))
-  (lt=* [x y] (or (.isBefore x y) (= x y)))
-  (eq*  [x y] (= x y))
-  LocalTime
-  (lt*  [x y] (.isBefore x y))
-  (lt=* [x y] (or (.isBefore x y) (= x y)))
-  (eq*  [x y] (= x y)))
+;; (extend-protocol Compare
+;;   LocalDateTime
+;;   (lt*  [x y] (.isBefore x y))
+;;   (lt=* [x y] (or (.isBefore x y) (= x y)))
+;;   (eq*  [x y] (= x y))
+;;   LocalDate
+;;   (lt*  [x y] (.isBefore x y))
+;;   (lt=* [x y] (or (.isBefore x y) (= x y)))
+;;   (eq*  [x y] (= x y))
+;;   LocalTime
+;;   (lt*  [x y] (.isBefore x y))
+;;   (lt=* [x y] (or (.isBefore x y) (= x y)))
+;;   (eq*  [x y] (= x y)))
 
 (defn- only-compare-existing-values [val-a val-b f]
   (if-not (and val-a val-b)
@@ -155,7 +156,7 @@
                     (apply all-of))]
       (rule entry))))
 
-(defn check [fun attr-name msg]
+(defn check [[fun msg] attr-name]
   (fn [val]
     (if (nil? val)
       [false {attr-name "required property has no value"}]
@@ -163,44 +164,50 @@
         [true {}]
         [false {attr-name msg}]))))
 
-(defn str->object-id? [s]
-  (or (instance? ObjectId s)
-      (re-find #"^[\da-f]{24}$" s)))
-(defn str->time?      [s] (re-find #"^\d{2}:\d{2}(:\d{2})?(\.\d{3})?$" s))
-(defn str->date-time? [s] (re-find #"^\d{4}\-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?(\.\d{3})?$" s))
-(defn str->date?      [s] (re-find #"^\d{4}\-\d{2}-\d{2}$" s))
+;; (defn str->object-id? [s]
+;;   (or (instance? ObjectId s)
+;;       (re-find #"^[\da-f]{24}$" s)))
 
-(defn object-id? [x]
-  (isa? (class x) ObjectId))
+;; (defn str->time?      [s] (re-find #"^\d{2}:\d{2}(:\d{2})?(\.\d{3})?$" s))
 
-(defn time? [x]
-  (isa? (class x) LocalTime))
+;; (defn str->date-time? [s] (re-find #"^\d{4}\-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?(\.\d{3})?$" s))
 
-(defn date-time? [x]
-  (isa? (class x) LocalDateTime))
+;; (defn str->date?      [s] (re-find #"^\d{4}\-\d{2}-\d{2}$" s))
 
-(defn date? [x]
-  (isa? (class x) LocalDate))
+;; (defn object-id? [x]
+;;   (isa? (class x) ObjectId))
 
-(defn timestamp? [x]
-  (and (number? x) (<= 0 x)))
+;; (defn time? [x]
+;;   (isa? (class x) LocalTime))
 
-(defn boolean? [s] (or (true? s) (false? s)))
+;; (defn date-time? [x]
+;;   (isa? (class x) LocalDateTime))
 
-(defn validate-type [attr-name type-name]
-  (get {:string    (check string?     attr-name "not a string")
-        :number    (check number?     attr-name "not a number")
-        :vector    (check sequential? attr-name "not sequential")
-        :map       (check map?        attr-name "not a map")
-        :time      (check time?       attr-name "not a valid time declaration")
-        :date-time (check date-time?  attr-name "not a valid date-time declaration")
-        :date      (check date?       attr-name "not a valid date")
-        :timestamp (check timestamp?  attr-name "not a valid timestamp")
-        :object-id (check object-id?  attr-name "not a valid id")
-        :boolean   (check boolean?    attr-name "not a boolean")
-        :any       (fn [_] [true #{}])}
-       type-name
-       [false {attr-name {"unknown type" (name type-name)}}]))
+;; (defn date? [x]
+;;   (isa? (class x) LocalDate))
+
+;; (defn validate-type [attr-name type-name]
+;;   (get {:string    (check string?     attr-name "not a string")
+;;         :number    (check number?     attr-name "not a number")
+;;         :vector    (check sequential? attr-name "not sequential")
+;;         :map       (check map?        attr-name "not a map")
+;;         ;; :time      (check time?       attr-name "not a valid time declaration")
+;;         ;; :date-time (check date-time?  attr-name "not a valid date-time declaration")
+;;         ;; :date      (check date?       attr-name "not a valid date")
+;;         :timestamp (check timestamp?  attr-name "not a valid timestamp")
+;;         ;; :object-id (check object-id?  attr-name "not a valid id")
+;;         :boolean   (check boolean?    attr-name "not a boolean")
+;;         :any       (fn [_] [true #{}])}
+;;        type-name
+;;        [false {attr-name {"unknown type" (name type-name)}}]))
+
+(defmulti validate-type identity)
+
+(defmethod validate-type :default [type-name]
+  [false {"unknown type" (name type-name)}])
+
+(defn validate-type* [attr-name type-name]
+  (check (validate-type type-name) attr-name))
 
 (defn validate-vector [all-optional? attr-name rule vector-value]
   (let [[valid? errors] (r/reduce
@@ -213,23 +220,20 @@
     [valid? {attr-name errors}]))
 
 (defn get-check-fn [all-optional? k property-name property-definition]
-
+  ;; todo: use a multimethod instead which take into account both type and k
   (case k
-    :min        (check #(<= property-definition %)
-                       property-name
-                       (str "smaller than " property-definition))
-    :max        (check #(>= property-definition %)
-                       property-name
-                       (str "bigger than " property-definition))
-    :type       (validate-type property-name property-definition)
+    :min        (check [#(<= property-definition %) (str "smaller than " property-definition)]
+                       property-name)
+    :max        (check [#(>= property-definition %) (str "bigger than " property-definition)]
+                       property-name)
+    :type       (validate-type* property-name property-definition)
     ;;:vector    (partial validate-vector property-name property-definition)
     :properties #(validate-schema all-optional? {:properties property-definition} %)
     ;;:children   (fn [v] (map #(#'validate-schema property-definition %) v))
     :children   (partial validate-vector all-optional? property-name property-definition)
     ;;:map        property-definition
-    :in         (check #(contains? property-definition %)
-                       property-name
-                       (str "not in " property-definition))))
+    :in         (check [#(contains? property-definition %) (str "not in " property-definition)]
+                       property-name)))
 
 ;; todo: this is UGLY! this should not be done here...
 (defn escape-optional? [property property-value all-optional?]

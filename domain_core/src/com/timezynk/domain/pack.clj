@@ -151,14 +151,6 @@
                  (:properties dom-type-collection)
                  :remove-on-update?))
 
-(defmethod pack-property :any [_ v props] v)
-
-(defmethod pack-property :string [_ v props]
-  (when v
-    (if (string? v)
-      (let [^String trimmed (s/trim v)]
-        (when-not (.isEmpty ^String trimmed) trimmed))
-      (.toString v))))
 
 ;; (defmethod pack-property :object-id [_ v props]
 ;;   (um/object-id v))
@@ -168,32 +160,6 @@
 
 ;; (defmethod pack-property :time [_ v props]
 ;;   (ud/->local-time v))
-
-(defmethod pack-property :date-time [_ v props]
-  ;(ud/->local-datetime v)
-  (org.joda.time.LocalDateTime. v))
-
-(defmethod pack-property :number [_ v props]
-  (if (string? v)
-    (edn/read-string v)
-    v))
-
-(defmethod pack-property :timestamp [_ v props]
-  (if (string? v)
-    (edn/read-string v)
-    v))
-
-(defmethod pack-property :boolean [_ v props]
-  (if (string? v)
-    (edn/read-string v)
-    (if v true false)))
-
-(defmethod pack-property :vector [_ v props]
-  v)
-
-(defmethod pack-property nil [trail v props]
-  v)
-
 
 ;; (defn get-type-path
 ;;   "From a path, created by update-leafs,

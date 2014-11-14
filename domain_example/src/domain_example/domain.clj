@@ -26,3 +26,6 @@
                   :collection-factory #(mongo-collection
                                         (collection-name %)))
                 default-properties))
+
+(defmacro defdomtype [n & opts]
+  `(def ~n (dom-type ~@opts)))

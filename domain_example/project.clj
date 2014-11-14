@@ -11,7 +11,8 @@
                  [ring/ring-servlet "1.2.0-beta1"]
                  [com.timezynk.domain/domain-core "0.2.1-SNAPSHOT"]
                  [com.timezynk.domain/domain-versioned-mongo "0.2.1-SNAPSHOT"]
-                 [org.clojure/tools.logging "0.2.4"]]
+                 [org.clojure/tools.logging "0.2.4"]
+                 [joda-time "2.1"]]
 
   :repl-options {:init (do (use 'clojure.stacktrace
                                 'clojure.pprint
@@ -24,7 +25,8 @@
          :destroy            domain-example.ring/destroy
          :servlet-path-info? false}
 
-  :profiles {:dev {:dependecies    [[ring "1.2.1"]]
+  :profiles {:dev {:dependecies    [[ring "1.2.1"]
+                                    [midje "1.6.3"]]
                    :resource-paths ["resources-dev"]
                    :ring
                    {:init         domain-example.ring/init-dev

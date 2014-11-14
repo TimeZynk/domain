@@ -54,9 +54,7 @@ DomainTypeFactories are created via the defdomtype macro – the DomainTypeFacto
   {:name               :bars
    :collection-factory mock-collection-factory
    :validate-doc       (v/lt= :start :end)
-   :properties         {:start    (s/date-time)
-                        :end      (s/date-time)
-                        :counter  (s/number)
+   :properties         {:counter  (s/number)
                         :ts       (s/timestamp :optional? true)
                         :bool     (s/boolean   :optional? true)
                         :str      (s/string    :optional? true)
@@ -100,9 +98,7 @@ DomainTypeFactories are created via the defdomtype macro – the DomainTypeFacto
 (facts "Execute the conj! assembly line to add new documents"
 
        (fact "Create a new document via the conj! line"
-             (let [document  {:counter 2
-                              :start   (LocalDateTime. 2012 1 1 10 0)
-                              :end     (LocalDateTime. 2013 1 1 10 0)}]
+             (let [document  {:counter 2}]
                @(dom/conj! bars document) => document
                (provided
                 (rel/conj! mock-coll
@@ -112,17 +108,12 @@ DomainTypeFactories are created via the defdomtype macro – the DomainTypeFacto
        ;; Todo: The validation functionality should be tested much more
        (fact "Throw an exception if the input is invalid."
              (let [document {;; :counter 2 ;mandatory, but missing
-                             :start (LocalDateTime. 2013 1 1 10 0)
-                             :end   (LocalDateTime. 2014 1 1 10 0)}]
+                             :bool false}]
                @(dom/conj! bars document) => (throws Exception)))
 
        (fact "You can add several documents at once"
-             (let [documents [{:start   (LocalDateTime. 2014 1 1 10 0)
-                               :end     (LocalDateTime. 2014 1 1 11 0)
-                               :counter 2}
-                              {:start   (LocalDateTime. 2014 1 2 10 0)
-                               :end     (LocalDateTime. 2014 1 2 11 0)
-                               :counter 1}]]
+             (let [documents [{:counter 2}
+                              {:counter 1}]]
                @(dom/conj! bars documents)
                => documents
                (provided
@@ -131,34 +122,22 @@ DomainTypeFactories are created via the defdomtype macro – the DomainTypeFacto
 (facts "Execute the select assembly line to fetch documents"
 
        (fact "Fetch all documents"
-             (let [documents [{:start   (LocalDateTime. 2014 1 1 10 0)
-                               :end     (LocalDateTime. 2014 1 1 11 0)
-                               :counter 2}
-                              {:start   (LocalDateTime. 2014 1 1 10 0)
-                               :end     (LocalDateTime. 2014 1 1 11 0)
-                               :counter 2}
-                              {:start   (LocalDateTime. 2014 1 2 10 0)
-                               :end     (LocalDateTime. 2014 1 2 11 0)
-                               :counter 1}]]
+             (let [documents [{:counter 2}
+                              {:counter 2}
+                              {:counter 1}]]
                (count @(dom/select bars {})) => 3
                (provided
                 (rel/select mock-coll {}) => (future documents))))
 
        (fact "Fetch restricted selection"
-             (let [documents [{:start   (LocalDateTime. 2014 1 2 10 0)
-                               :end     (LocalDateTime. 2014 1 2 11 0)
-                               :counter 1}]]
+             (let [documents [{:counter 1}]]
                (count @(dom/select bars {:counter 1})) => 1
                (provided
                 (rel/select mock-coll {:counter 1}) => (future documents)))))
 
 (fact "Execute the update-in! assembly line to update documents"
-      (let [updated-documents [{:start   (LocalDateTime. 2014 1 1 10 0)
-                                :end     (LocalDateTime. 2014 1 1 11 0)
-                                :counter 3}
-                               {:start   (LocalDateTime. 2014 1 1 10 0)
-                                :end     (LocalDateTime. 2014 1 1 11 0)
-                                :counter 3}]]
+      (let [updated-documents [{:counter 3}
+                               {:counter 3}]]
         @(dom/update-in! bars {:counter 2} {:counter 3})
         => updated-documents
         (provided
@@ -182,31 +161,23 @@ DomainTypeFactories are created via the defdomtype macro – the DomainTypeFacto
 (facts "Use the pack functionality to prepare the input for the assembly lines"
        ;; Todo: remove joda dependency
        (fact "Input might be transformed and coerced"
-             (dom/pack-doc bars {:start   "2013-01-01T11:11"
-                                 :end     "2013-01-01T17:00"
-                                 :counter "2"
+             (dom/pack-doc bars {:counter "2"
                                  :ts      "1415804523291"
                                  :bool    "true"
                                  :str     " Lorem ipsum    "})
-             => {:start   (LocalDateTime. 2013 1 1 11 11)
-                 :end     (LocalDateTime. 2013 1 1 17 0)
-                 :counter 2
+             => {:counter 2
                  :ts      (Long/parseLong "1415804523291")
                  :bool    true
                  :str     "Lorem ipsum"})
 
        (fact "Input might be transformed and coerced even in nested maps and vectors"
-             (dom/pack-doc bars {:start   "2013-01-01T11:11"
-                                 :end     "2013-01-01T17:00"
-                                 :counter "2"
+             (dom/pack-doc bars {:counter "2"
                                  :str-vec [" a" "b  "]
                                  :deep    {:foo {:foo2 "   c"}
                                            :str " d "}
                                  :deep-vec [{:foo {:foo2 "   c"}
                                              :str " d "}]})
-             => {:start    (LocalDateTime. 2013 1 1 11 11)
-                 :end      (LocalDateTime. 2013 1 1 17 0)
-                 :counter  2
+             => {:counter  2
                  :str-vec  ["a" "b"]
                  :deep     {:foo {:foo2 "c"}
                             :str "d"}
@@ -218,13 +189,44 @@ DomainTypeFactories are created via the defdomtype macro – the DomainTypeFacto
        ;; todo Test nested pack-functionality
        )
 
-(facts "The input is validated"
+(facts "There exists powerful validation functionality"
 
-       ;; todo write tests!
-       ;;; - on property level
-       ;;; - on document level
+       (fact "Validate if mandatory properties are set"
+             (v/validate-properties! false
+                                     {:name (s/string), :nick (s/string :optional? true)}
+                                     {:nick "The Dude"})
+             => (throws Exception)
 
+             (v/validate-properties! false
+                                     {:name (s/string), :nick (s/string :optional? true)}
+                                     {:name "Lebowsky"})
+             =not=> (throws Exception)
+
+             (v/validate-properties! true
+                                     {:name (s/string), :nick (s/string :optional? true)}
+                                     {:nick "The Dude"})
+             =not=> (throws Exception))
+
+       (fact "Validate max and min values"
+             (let [props     {:age (s/number :min 10 :max 20)}
+                   validate! (partial v/validate-properties! false props)]
+               (validate! {:age 9})      => (throws Exception)
+               (validate! {:age 21})     => (throws Exception)
+               (validate! {:age 15}) =not=> (throws Exception)))
+
+       ;; Todo test type validation and stuff
        )
+
+(facts "Property values can be generated"
+
+       (fact "A property generated after an object has been fetched is said to be computed"
+             :todo)
+
+       (fact "A property generated before an object is persisted, is said to be derived"
+             :todo)
+
+       (fact "A property can also have a default value"
+             :todo))
 
 ;; Todo: Test HTTP layer. This might actually be an own project ...
 ;; ================================================================
