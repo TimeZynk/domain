@@ -58,9 +58,9 @@ DomainTypeFactories are created via the defdomtype macro – the DomainTypeFacto
                         :ts       (s/timestamp :optional? true)
                         :bool     (s/boolean   :optional? true)
                         :str      (s/string    :optional? true)
-                        :str-vec  (s/vector (s/string) :optional? true)
+                        :str-seq  (s/sequence (s/string) :optional? true)
                         :deep     (s/map foo :optional? true)
-                        :deep-vec (s/maps foo :optional? true)}})
+                        :deep-seq (s/maps foo :optional? true)}})
 
 (def mock-coll (:collection bars))
 
@@ -172,16 +172,16 @@ DomainTypeFactories are created via the defdomtype macro – the DomainTypeFacto
 
        (fact "Input might be transformed and coerced even in nested maps and vectors"
              (dom/pack-doc bars {:counter "2"
-                                 :str-vec [" a" "b  "]
+                                 :str-seq [" a" "b  "]
                                  :deep    {:foo {:foo2 "   c"}
                                            :str " d "}
-                                 :deep-vec [{:foo {:foo2 "   c"}
+                                 :deep-seq [{:foo {:foo2 "   c"}
                                              :str " d "}]})
              => {:counter  2
-                 :str-vec  ["a" "b"]
+                 :str-seq  ["a" "b"]
                  :deep     {:foo {:foo2 "c"}
                             :str "d"}
-                 :deep-vec [{:foo {:foo2 "c"}
+                 :deep-seq [{:foo {:foo2 "c"}
                              :str "d"}]})
 
        ;; todo Test all pack-functionality around queries

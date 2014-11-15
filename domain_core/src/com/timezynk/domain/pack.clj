@@ -78,7 +78,7 @@
         )))
 
 
-                                        ; pack collects
+                                        ; pack collects (remove this funcitonality?)
 
 (defn- pack-collect [properties [property-name options]]
   (let [{:keys [collection
@@ -118,6 +118,14 @@
 
 
                                         ; pack body
+
+(defn validate-input!
+  "Validate input and ensure it can be packed/coerced"
+  [dom-type-factory doc]
+  ;; todo: Not written yet. Use -> json->pack named parameter of defproptype
+  ;; Another possibility is to totally skip this step. It might not be necessary.
+  ;; The only function would be to present a nicer error message.
+  doc)
 
 (defn pack-doc
   "Converts the document from a document with values in \"client types\",

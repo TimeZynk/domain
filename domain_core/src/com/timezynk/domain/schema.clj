@@ -1,5 +1,5 @@
 (ns com.timezynk.domain.schema
-  (:refer-clojure :exclude [map vector string number boolean time] )
+  (:refer-clojure :exclude [map sequence string number boolean time] )
   (:require [clojure.core                     :as c]
             [clojure.core.reducers            :as r]
             [com.timezynk.domain.update-leafs :refer [update-leafs]]
@@ -12,96 +12,68 @@
   (fn [& {:as options}]
     (merge {:type type} options)))
 
-(defn defproptype* [kword validate-fn msg-str pack-fn]
-  (defmethod validate-type kword [_]
-    [validate-fn msg-str])
-  (defmethod pack-property kword [_ v _]
-    (pack-fn v))
-  (t kword))
+(defn proptype [& {:keys [key validate invalid-msg pack declare]}]
+  (defmethod validate-type key [_]
+    [validate invalid-msg])
+  (defmethod pack-property key [_ v _]
+    ((or pack identity) v))
+  (or declare (t key)))
 
-(defmacro defproptype [n validate-fn msg-str pack-fn]
+(defmacro defproptype [n & {:keys [validate invalid-msg pack declare]}]
   (let [kword (keyword n)]
     `(def ~n
-       (defproptype* ~kword
-         ~validate-fn
-         ~msg-str
-         ~pack-fn))))
+       (proptype :key ~kword
+                 :validate ~validate
+                 :invalid-msg ~invalid-msg
+                 :pack ~pack
+                 :declare ~declare))))
 
 
                                         ; Standard Types
 
+(defproptype any
+  :validate (constantly true)
+  :invalid-msg "")
+
+
 (defproptype string
-  string? "not a string"
-  #(when %
-     (if (string? %)
-       (let [^String trimmed (s/trim %)]
-         (when-not (.isEmpty ^String trimmed) trimmed))
-       (.toString %))))
+  :validate string?
+  :invalid-msg "not a string"
+  :pack #(when %
+           (if (string? %)
+             (let [^String trimmed (s/trim %)]
+               (when-not (.isEmpty ^String trimmed) trimmed))
+             (.toString %))))
 
 (defproptype number
-  number? "not a number"
-  #(if (string? %)
-     (edn/read-string %)
-     %))
+  :validate number?
+  :invalid-msg "not a number"
+  :pack #(if (string? %) (edn/read-string %) %))
 
 (defproptype boolean
-  #(or (true? %) (false? %)) "not a boolean"
-  #(if (string? %)
-     (edn/read-string %)
-     (if % true false)))
+  :validate #(or (true? %) (false? %))
+  :invalid-msg "not a boolean"
+  :pack #(if (string? %)
+           (edn/read-string %)
+           (if % true false)))
 
 (defproptype timestamp
-  #(and (number? %) (<= 0 %)) "not a valid timestamp"
-  #(if (string? %)
-     (edn/read-string %)
-     %))
+  :validate #(and (number? %) (<= 0 %))
+  :invalid-msg "not a valid timestamp"
+  :pack #(if (string? %) (edn/read-string %) %))
 
-                                        ; "Annotators"
+(defproptype sequence
+  :validate sequential?
+  :invalid-msg "not a sequence"
+  :declare (fn sequence [children & options]
+             (apply (t :sequence) :children children options)))
 
-
-(def any       (t :any))
-
-(defn vector [children & options]
-  (apply (t :vector) :children children options))
-
-(defn map [properties & options]
-  (apply (t :map) :properties properties options))
+(defproptype map
+  :validate map?
+  :invalid-msg "not a map"
+  :declare (fn map [properties & options]
+             (apply (t :map) :properties properties options)))
 
 (defn maps [properties & options]
-  (apply vector (map properties)
+  (apply sequence (map properties)
          options))
-
-
-                                        ; Validation
-
-(defmethod validate-type :vector [_]
-  [sequential? "not sequential"])
-
-(defmethod validate-type :map [_]
-  [map? "not a map"])
-
-(defmethod validate-type :any [_]
-  [(fn [_] true) ""])
-
-
-                                        ; Packing
-
-(defmethod pack-property :any [_ v props] v)
-
-;; (defmethod pack-property :string [_ v props]
-;;   (when v
-;;     (if (string? v)
-;;       (let [^String trimmed (s/trim v)]
-;;         (when-not (.isEmpty ^String trimmed) trimmed))
-;;       (.toString v))))
-
-(defmethod pack-property :number [_ v props]
-  (if (string? v)
-    (edn/read-string v)
-    v))
-
-(defmethod pack-property :vector [_ v props]
-  v)
-
-(defmethod pack-property nil [trail v props]
-  v)
