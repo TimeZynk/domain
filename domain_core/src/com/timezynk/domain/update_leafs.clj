@@ -1,6 +1,5 @@
 (ns com.timezynk.domain.update-leafs
-  (:require ;[clojure.tools.logging     :as log :refer [spy info warn]]
-            [clojure.core.reducers     :as r]))
+  (:require [clojure.core.reducers :as r]))
 
 
                                         ; Update leafs

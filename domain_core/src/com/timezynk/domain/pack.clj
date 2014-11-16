@@ -61,17 +61,17 @@
                                    value
                                    properties))))
 
-(defn pack-query [dom-type-collection request]
+(defn pack-query [dom-type-factory request]
   (let [{:keys [domain-query-params route-params]} request
-        {:keys [properties]}          dom-type-collection]
+        {:keys [properties]}                       dom-type-factory]
     (-> (merge domain-query-params route-params)
         (pack-query-parameters properties)
         ;replace-with-mongo-operators
         )))
 
-(defn pack-post-query [dom-type-collection request]
+(defn pack-post-query [dom-type-factory request]
   (let [{:keys [domain-query-params route-params body-params]} request
-        {:keys [properties]}          dom-type-collection]
+        {:keys [properties]}                                   dom-type-factory]
     (-> (merge body-params domain-query-params route-params)
         (pack-query-parameters properties)
         ;replace-with-mongo-operators
@@ -101,9 +101,9 @@
                 :ref-property (or vid property-name))
          (dissoc :fields))]))
 
-(defn pack-collects [dom-type-collection request]
+(defn pack-collects [dom-type-factory request]
   (let [{:keys [domain-collect-params]} request
-        {:keys [properties]} dom-type-collection]
+        {:keys [properties]} dom-type-factory]
     (->> domain-collect-params
          (map (partial pack-collect properties))
          (into {}))))
@@ -130,33 +130,33 @@
 (defn pack-doc
   "Converts the document from a document with values in \"client types\",
    to a document with values in \"server types\"."
-  [dom-type-collection doc]
+  [dom-type-factory doc]
   (update-leafs doc
                 pack-property
-                (:properties dom-type-collection)))
+                (:properties dom-type-factory)))
 
 (defn pack-insert
   "Filters and prepares parameters before insert"
-  [dom-type-collection req]
+  [dom-type-factory req]
   (filter-params (merge (:body-params req) (:route-params req))
-                 (:properties dom-type-collection)
+                 (:properties dom-type-factory)
                  :remove-on-create?))
 
 (defn pack-bulk-insert
   "Filters and prepares parameters before bulk insert"
-  [dom-type-collection req]
+  [dom-type-factory req]
   (map
     (fn [d]
       (filter-params (merge d (:route-params req))
-                 (:properties dom-type-collection)
+                 (:properties dom-type-factory)
                  :remove-on-create?))
     (:body-params req)))
 
 (defn pack-update
   "Filters and prepares parameters before update"
-  [dom-type-collection req]
+  [dom-type-factory req]
   (filter-params (merge (:body-params req) (:route-params req))
-                 (:properties dom-type-collection)
+                 (:properties dom-type-factory)
                  :remove-on-update?))
 
 
@@ -195,10 +195,10 @@
 ;; (defn pack-doc
 ;;   "Converts the document from a document with values in \"client types\",
 ;;    to a document with values in \"server types\"."
-;;   [dom-type-collection doc]
+;;   [dom-type-factory doc]
 ;;   (update-leafs doc
 ;;                 pack-property
-;;                 (:properties dom-type-collection)))
+;;                 (:properties dom-type-factory)))
 
 ;; (defn- collect-property-query [props k v]
 ;;   (let [collect-spec (get-in props [k :collect])
@@ -259,7 +259,7 @@
 ;; (defn pack-query-and-collects
 ;;   "Converts the merged url query parameters and route parameters to a query with
 ;;    values in server side types."
-;;   [dom-type-collection req]
+;;   [dom-type-factory req]
 ;;   (let [query (merge (:query-params req)
 ;;                      (:route-params req)
 ;;                      (-> req
@@ -267,7 +267,7 @@
 ;;                          (select-keys [:company-id])))
 ;;         ]
 ;;     (->> query
-;;          (map (partial pack-operator (:properties dom-type-collection)))
+;;          (map (partial pack-operator (:properties dom-type-factory)))
 ;;          split->query-and-collects
 ;;          merge-into-hashmaps)))
 
@@ -281,16 +281,16 @@
 
 ;; (defn pack-insert
 ;;   "Filters and prepares parameters before insert"
-;;   [dom-type-collection req]
+;;   [dom-type-factory req]
 ;;   (filter-params (merge (:body-params req) (:route-params req))
-;;                  (:properties dom-type-collection)
+;;                  (:properties dom-type-factory)
 ;;                  :remove-on-create?))
 
 ;; (defn pack-update
 ;;   "Filters and prepares parameters before update"
-;;   [dom-type-collection req]
+;;   [dom-type-factory req]
 ;;   (filter-params (merge (:body-params req) (:route-params req))
-;;                  (:properties dom-type-collection)
+;;                  (:properties dom-type-factory)
 ;;                  :remove-on-update?))
 
 ;; (defmethod pack-property :default [_ v props]

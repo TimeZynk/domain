@@ -11,6 +11,7 @@
                  [com.timezynk.domain/domain-core "0.2.1-SNAPSHOT"]
                  [com.timezynk.domain/assembly-line "0.2.0"]
                  [compojure "1.2.1"]
-                 [joda-time "2.0"]]
+                 [joda-time "2.0"]
+                 [cheshire "5.3.1"]]
 
   :profiles {:dev {:dependencies [[midje "1.6.3"]]}})

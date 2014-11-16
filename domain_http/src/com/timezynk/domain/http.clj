@@ -57,7 +57,7 @@
 
 (def ^:dynamic *request* nil)
 
-(defn rest-routes [dom-type-factory & {:keys [index post put get delete path pre-process-dtc]
+(defn rest-routes [dom-type-factory & {:keys [index post put get delete path pre-process-dtf]
                                           :or {index  true
                                                post   true
                                                put    true
@@ -73,11 +73,11 @@
               (GET path req
                    (fn [req]
                      (binding [*request* req]
-                       (let [dom-type-factory (if pre-process-dtc
-                                                   (pre-process-dtc :index dom-type-factory req)
-                                                   dom-type-factory)
-                             restriction         (pack/pack-query dom-type-factory req)
-                             collects            (pack/pack-collects dom-type-factory req)
+                       (let [dom-type-factory (if pre-process-dtf
+                                                (pre-process-dtf :index dom-type-factory req)
+                                                dom-type-factory)
+                             restriction      (pack/pack-query dom-type-factory req)
+                             collects         (pack/pack-collects dom-type-factory req)
                              ]
                          (-> (dom/select dom-type-factory restriction collects)
                              (authorize-station (fn [dtc doc]
@@ -91,8 +91,8 @@
               (POST path req
                     (fn [req]
                       (binding [*request* req]
-                          (let [dom-type-factory (if pre-process-dtc
-                                                      (pre-process-dtc :post dom-type-factory req)
+                          (let [dom-type-factory (if pre-process-dtf
+                                                      (pre-process-dtf :post dom-type-factory req)
                                                       dom-type-factory)
                                 document            (pack/pack-insert dom-type-factory req)]
                             (-> (dom/conj! dom-type-factory document)
@@ -102,15 +102,15 @@
                                                      doc))
                                 (add-stations* post)
                                 deref
-                                first
+                                ;first
                                 json-response))))))
 
             (when post
               (POST (str "/bulk" path) req
                     (fn [req]
                       (binding [*request* req]
-                          (let [dom-type-factory (if pre-process-dtc
-                                                      (pre-process-dtc :post dom-type-factory req)
+                          (let [dom-type-factory (if pre-process-dtf
+                                                      (pre-process-dtf :post dom-type-factory req)
                                                       dom-type-factory)
                                 documents            (pack/pack-bulk-insert dom-type-factory req)]
                             (-> (dom/conj! dom-type-factory documents)
@@ -126,8 +126,8 @@
               (let [p (str path "/:id")
                     f (fn [req]
                         (binding [*request* req]
-                          (let [dom-type-factory (if pre-process-dtc
-                                                      (pre-process-dtc :put dom-type-factory req)
+                          (let [dom-type-factory (if pre-process-dtf
+                                                      (pre-process-dtf :put dom-type-factory req)
                                                       dom-type-factory)
                                 restriction         (pack/pack-query dom-type-factory req)
                                 collects            (pack/pack-collects dom-type-factory req)
@@ -140,7 +140,7 @@
                                                      doc))
                                 (add-stations* put)
                                 deref
-                                first
+                                ;first
                                 json-response))))]
                 [(PUT p req f)
                  (PATCH p req f)]))
@@ -149,11 +149,11 @@
               (GET (str path "/:id") req
                    (fn [req]
                      (binding [*request* req]
-                       (let [dom-type-factory (if pre-process-dtc
-                                                   (pre-process-dtc :get dom-type-factory req)
-                                                   dom-type-factory)
-                             restriction         (pack/pack-query dom-type-factory req)
-                             collects            (pack/pack-collects dom-type-factory req)
+                       (let [dom-type-factory (if pre-process-dtf
+                                                (pre-process-dtf :get dom-type-factory req)
+                                                dom-type-factory)
+                             restriction      (pack/pack-query dom-type-factory req)
+                             collects         (pack/pack-collects dom-type-factory req)
                              ]
                          (-> (dom/select dom-type-factory restriction collects)
                              (authorize-station (fn [dtc doc]
@@ -168,8 +168,8 @@
               (DELETE (str path "/:id") req
                       (fn [req]
                         (binding [*request* req]
-                          (let [dom-type-factory (if pre-process-dtc
-                                                      (pre-process-dtc :delete dom-type-factory req)
+                          (let [dom-type-factory (if pre-process-dtf
+                                                      (pre-process-dtf :delete dom-type-factory req)
                                                       dom-type-factory)
                                 restriction         (pack/pack-query dom-type-factory req)]
                             (-> (dom/disj! dom-type-factory restriction)
@@ -184,8 +184,8 @@
               (DELETE (str "/bulk" path) req
                       (fn [req]
                         (binding [*request* req]
-                          (let [dom-type-factory (if pre-process-dtc
-                                                      (pre-process-dtc :delete dom-type-factory req)
+                          (let [dom-type-factory (if pre-process-dtf
+                                                      (pre-process-dtf :delete dom-type-factory req)
                                                       dom-type-factory)
                                 restriction         (pack/pack-post-query dom-type-factory req)]
                             (-> (dom/disj! dom-type-factory restriction)
