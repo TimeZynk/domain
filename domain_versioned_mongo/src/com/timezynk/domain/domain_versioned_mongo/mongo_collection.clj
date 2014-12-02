@@ -79,3 +79,8 @@
                   (clojure.string/replace #"\-" (constantly ".")))
               version)
          keyword))))
+
+(defn mongo-collection-factory
+  "Use this function with when you create a domain type factory"
+  [domain-type-factory]
+  (mongo-collection (collection-name domain-type-factory)))

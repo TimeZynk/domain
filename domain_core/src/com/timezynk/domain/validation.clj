@@ -266,6 +266,7 @@
       (validator property-value))))
 
 (defn validate-properties [all-optional? properties doc]
+  (println doc "    < ----- docdocdocdco")
   (let [only-these-keys (apply only-these (keys properties))
         rule            (->> properties
                              (map #(partial validate-property % all-optional?))

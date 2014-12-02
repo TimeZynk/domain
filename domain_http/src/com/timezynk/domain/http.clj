@@ -58,11 +58,11 @@
 (def ^:dynamic *request* nil)
 
 (defn rest-routes [dom-type-factory & {:keys [index post put get delete path pre-process-dtf]
-                                          :or {index  true
-                                               post   true
-                                               put    true
-                                               get    true
-                                               delete true}}]
+                                       :or   {index  true
+                                              post   true
+                                              put    true
+                                              get    true
+                                              delete true}}]
 
   (let [path                (or path (str "/" (name (:name dom-type-factory))))
         list-truthy         (comp (partial filter identity) flatten list)]

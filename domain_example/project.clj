@@ -5,6 +5,9 @@
   :dependencies [[org.clojure/clojure "1.6.0"]
                  [compojure "1.2.0"]
                  [ring/ring-defaults "0.1.2"]
+                 [com.timezynk.domain/domain-core "0.2.1-SNAPSHOT"]
+                 [com.timezynk.domain/domain-http "0.2.1-SNAPSHOT"]
+                 [com.timezynk.domain/domain-versioned-mongo "0.2.1-SNAPSHOT"]
                  ;;
                  [slingshot "0.12.1"]
                  [congomongo "0.4.4"]

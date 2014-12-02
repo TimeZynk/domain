@@ -19,7 +19,6 @@
            ;; What about another term for a factory, since
            ;; we already use that term inside of domain?
            (get options :collection-factory)]}
-
     (map->DomainTypeFactory
       (-> {:update!-line  standard/update!
            :insert!-line  standard/insert!

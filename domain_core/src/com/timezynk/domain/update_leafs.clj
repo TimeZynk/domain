@@ -8,6 +8,7 @@
 
 (defn- update-value [trail fun & args]
   (fn [m p]
+    (println m p fun "update-valie")
     (update-in m [p]
                #(apply update-leafs* (conj trail p) % fun %2)
                args)))

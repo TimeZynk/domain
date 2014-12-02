@@ -7,19 +7,19 @@
 
                                        ;pack query
 
-;; (def mongo-operators {:_from_ :$gte
-;;                       :_to_   :$lte
-;;                       :_lt_   :$lt
-;;                       :_lte_  :$lte
-;;                       :_gt_   :$gt
-;;                       :_gte_  :$gte
-;;                       :_or_   :$or
-;;                       :_not_  :$ne
-;;                       :_in_   :$in
-;;                       :_elem_ :$elemMatch})
+(def mongo-operators {:_from_ :$gte
+                      :_to_   :$lte
+                      :_lt_   :$lt
+                      :_lte_  :$lte
+                      :_gt_   :$gt
+                      :_gte_  :$gte
+                      :_or_   :$or
+                      :_not_  :$ne
+                      :_in_   :$in
+                      :_elem_ :$elemMatch})
 
-;; (defn- replace-with-mongo-operators [q]
-;;   (postwalk-replace mongo-operators q))
+(defn- replace-with-mongo-operators [q]
+   (postwalk-replace mongo-operators q))
 
 (defn- operator? [key]
   (->> key name (re-matches #"^_.*_$")))
@@ -66,7 +66,7 @@
         {:keys [properties]}                       dom-type-factory]
     (-> (merge domain-query-params route-params)
         (pack-query-parameters properties)
-        ;replace-with-mongo-operators
+        replace-with-mongo-operators ;; TODO: this should be configurable
         )))
 
 (defn pack-post-query [dom-type-factory request]
@@ -74,7 +74,7 @@
         {:keys [properties]}                                   dom-type-factory]
     (-> (merge body-params domain-query-params route-params)
         (pack-query-parameters properties)
-        ;replace-with-mongo-operators
+        replace-with-mongo-operators ;; TODO: this should be configurable
         )))
 
 

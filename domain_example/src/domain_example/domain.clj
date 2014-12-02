@@ -1,6 +1,6 @@
 (ns domain-example.domain
   (:require [com.timezynk.domain :as dom]
-            [com.timezynk.domain.domain-versioned-mongo.mongo-collection :refer [mongo-collection]]
+            [com.timezynk.domain.domain-versioned-mongo.mongo-collection :refer [mongo-collection-factory]]
             [com.timezynk.domain.domain-versioned-mongo.prop-types :as pt]))
 
 (defn dom-type [options]
