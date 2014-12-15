@@ -55,6 +55,8 @@
 
 (defmulti pack-property get-type)
 
+(defmethod pack-property nil [_ v _] v)
+
 (defn- pack-query-parameters [q properties]
   (update-leafs q (fn [path value]
                     (pack-property (clean-property-path path)
