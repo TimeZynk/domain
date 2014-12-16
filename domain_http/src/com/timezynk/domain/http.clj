@@ -125,6 +125,11 @@
             (when put
               (let [p (str path "/:id")
                     f (fn [req]
+                        (println "")
+                        (println ">>>>>put<<<<<<")
+                        (println req)
+                        (println ">>>>>put<<<<<<")
+                        (println "")
                         (binding [*request* req]
                           (let [dom-type-factory (if pre-process-dtf
                                                       (pre-process-dtf :put dom-type-factory req)

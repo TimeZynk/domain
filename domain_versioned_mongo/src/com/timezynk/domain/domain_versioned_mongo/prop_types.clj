@@ -21,6 +21,9 @@
                                     :remove-on-create? true)
                     :pid        (id :optional? true
                                     :remove-on-create? true)
+                    :valid-to   (timestamp :optional? true
+                                           :remove-on-create? true
+                                           :remove-on-update? true)
                     :valid-from (timestamp :optional? true
                                            :remove-on-create? true
                                            :remove-on-update? true)})
