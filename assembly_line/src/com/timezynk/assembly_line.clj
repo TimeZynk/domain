@@ -1,4 +1,4 @@
-(ns com.timezynk.domain.assembly-line
+(ns com.timezynk.assembly-line
   (:require [clojure.core.reducers     :as r]))
 
 (defprotocol AssemblyLineExecute

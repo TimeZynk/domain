@@ -1,6 +1,6 @@
-(ns domain.assembly-line-test
+(ns com.timezynk.assembly-line-test
   (:require [clojure.test :refer :all]
-            [com.timezynk.domain.assembly-line :as line]))
+            [com.timezynk.assembly-line :as line]))
 
 "
 Assembly Lines
