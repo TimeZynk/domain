@@ -5,4 +5,6 @@
             :url "https://opensource.org/licenses/BSD-3-Clause"}
   :scm {:name "git"
         :url  "https://github.com/TimeZynk/domain"}
-  :dependencies [[org.clojure/clojure "1.10.1" :scope "provided"]])
+  :dependencies [
+    [org.clojure/clojure "1.10.1" :scope "provided"]
+  ])
