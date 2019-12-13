@@ -1,9 +1,9 @@
-(ns tzbackend.mongo.channel
+(ns com.timezynk.domain.mongo.channel
   (:require
     [com.timezynk.useful.channel :as c]
+    [com.timezynk.useful.mongo.db :refer [db]]
     [com.timezynk.useful.prometheus.core :as metrics]
     [somnium.congomongo :as mongo]
-    [tzbackend.util.db :refer [db]]
   ))
 
 (def ^:const WAIT_TIMEOUT 10000)

@@ -1,13 +1,5 @@
-(ns tzbackend.mongo.predicates
-  "Predicates used in a query. They will be translated into a mongo query."
-  (:require
-    [clojure.core.reducers :as r]
-    [clojure.tools.logging :as log :refer [spy info warn]]
-    [com.timezynk.useful.map :as umap]
-    [com.timezynk.useful.mongo :as um]
-    [somnium.congomongo :as mongo]
-    [tzbackend.persistence :as p]
-  ))
+(ns com.timezynk.domain.mongo.predicates
+  "Predicates used in a query. They will be translated into a mongo query.")
 
 (defn- field-pos [x y]
   (let [x? (keyword? x)

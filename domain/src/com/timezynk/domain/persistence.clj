@@ -1,7 +1,6 @@
 (ns com.timezynk.domain.persistence
   (:refer-clojure :exclude [conj! disj!])
   (:require [com.timezynk.assembly-line :as line]
-            [clojure.tools.logging :as log]
             [com.timezynk.useful.mongo :as um]))
 
 (defprotocol Persistence

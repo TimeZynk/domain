@@ -1,5 +1,5 @@
 (ns com.timezynk.domain.validation
-  "This namespace is copied from tzbackend.util.schema.validation."
+  "This namespace is copied from com.timezynk.domain.util.schema.validation."
   (:require
    [clojure.core.reducers :as r]
    [clojure.set :refer [difference]]
@@ -32,7 +32,7 @@
                        rules))
 
 (defn- some-of-proto [treshold-func err-wrap-name rules]
-  "Used internally by tzbackend.util.validate ns"
+  "Used internally by com.timezynk.domain.util.validate ns"
   (validation-operator (fn [results] (->> results
                                           (filter true?)
                                           count

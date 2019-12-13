@@ -6,7 +6,7 @@
    [clojure.spec.alpha :as spec]
    [clojure.string :refer [trim]]
    [com.timezynk.useful.mongo :as um]
-   [tzbackend.domain.update-leafs :refer [update-leafs]]
+   [com.timezynk.domain.update-leafs :refer [update-leafs]]
    [com.timezynk.useful.rest.current-user :as current-session]
    )
   (:import [org.bson.types ObjectId]))

@@ -1,16 +1,16 @@
-(ns com.timezynk.mongo.core
+(ns com.timezynk.domain.mongo.core
   "A persistence layer aimed at MongoDB with versioned collection"
   (:refer-clojure :exclude [compile conj! disj!])
   (:require 
    [clojure.core.reducers :as r]
    [clojure.set :refer [rename-keys]]
    [clojure.walk :refer [postwalk-replace]]
-   [com.timezynk.mongo.channel :as mchan]
+   [com.timezynk.domain.mongo.channel :as mchan]
+   [com.timezynk.domain.mongo.predicates :as predicates]
    [com.timezynk.useful.mongo :as um]
+   [com.timezynk.useful.mongo.db :refer [db]]
    [com.timezynk.useful.rest.current-user :as current-session]
-   [com.timezynk.util.db :refer [db]]
    [somnium.congomongo :as mongo]
-   com.timezynk.mongo.predicates
   )
   (:import [org.bson.types ObjectId]))
 
@@ -25,20 +25,20 @@
 (def ids-out {:_name :id, :_id :vid, :_pid :pid})
 
 (def predicate-symbols
-  '{=    com.timezynk.mongo.predicates/=*
-    !=   com.timezynk.mongo.predicates/!=*
-    not= com.timezynk.mongo.predicates/!=*
-    <    com.timezynk.mongo.predicates/<*
-    >    com.timezynk.mongo.predicates/>*
-    <=   com.timezynk.mongo.predicates/<=*
-    >=   com.timezynk.mongo.predicates/>=*
-    and  com.timezynk.mongo.predicates/and*
-    or   com.timezynk.mongo.predicates/or*
-    not  com.timezynk.mongo.predicates/not*
-    exists com.timezynk.mongo.predicates/exists
-    ;like com.timezynk.mongo.predicates/like
-    ;nil? com.timezynk.mongo.predicates/nil?*
-    in   com.timezynk.mongo.predicates/in})
+  '{=    predicates/=*
+    !=   predicates/!=*
+    not= predicates/!=*
+    <    predicates/<*
+    >    predicates/>*
+    <=   predicates/<=*
+    >=   predicates/>=*
+    and  predicates/and*
+    or   predicates/or*
+    not  predicates/not*
+    exists predicates/exists
+    ;like predicates/like
+    ;nil? predicates/nil?*
+    in   predicates/in})
 
 (defn where* [clause]
   (->> clause
