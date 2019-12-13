@@ -10,4 +10,5 @@
                :version 2
                :properties {:message (s/string)})]
       (is (not (nil? dtc)))
-      (is (= :test.object2 (c/collection-name dtc))))))
+      (is (= :test.object2 (c/collection-name dtc)))
+      (is (= :string (get-in dtc [:properties :message :type]))))))
