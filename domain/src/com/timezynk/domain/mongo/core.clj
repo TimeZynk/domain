@@ -6,12 +6,12 @@
    [clojure.set :refer [rename-keys]]
    [clojure.walk :refer [postwalk-replace]]
    [com.timezynk.domain.mongo.channel :as mchan]
-   [com.timezynk.domain.mongo.predicates :as predicates]
    [com.timezynk.useful.mongo :as um]
    [com.timezynk.useful.mongo.db :refer [db]]
    [com.timezynk.useful.rest.current-user :as current-session]
    [somnium.congomongo :as mongo]
-  )
+   com.timezynk.domain.mongo.predicates
+   )
   (:import [org.bson.types ObjectId]))
 
 
@@ -25,26 +25,23 @@
 (def ids-out {:_name :id, :_id :vid, :_pid :pid})
 
 (def predicate-symbols
-  '{=    predicates/=*
-    !=   predicates/!=*
-    not= predicates/!=*
-    <    predicates/<*
-    >    predicates/>*
-    <=   predicates/<=*
-    >=   predicates/>=*
-    and  predicates/and*
-    or   predicates/or*
-    not  predicates/not*
-    exists predicates/exists
-    ;like predicates/like
-    ;nil? predicates/nil?*
-    in   predicates/in})
+  '{=    com.timezynk.domain.mongo.predicates/=*
+    !=   com.timezynk.domain.mongo.predicates/!=*
+    not= com.timezynk.domain.mongo.predicates/!=*
+    <    com.timezynk.domain.mongo.predicates/<*
+    >    com.timezynk.domain.mongo.predicates/>*
+    <=   com.timezynk.domain.mongo.predicates/<=*
+    >=   com.timezynk.domain.mongo.predicates/>=*
+    and  com.timezynk.domain.mongo.predicates/and*
+    or   com.timezynk.domain.mongo.predicates/or*
+    not  com.timezynk.domain.mongo.predicates/not*
+    exists com.timezynk.domain.mongo.predicates/exists
+    ;like com.timezynk.domain.mongo.predicates/like
+    ;nil? com.timezynk.domain.mongo.predicates/nil?*
+    in   com.timezynk.domain.mongo.predicates/in})
 
 (defn where* [clause]
-  (->> clause
-       (postwalk-replace predicate-symbols)
-       ;(postwalk-replace ids-in)
-       ))
+  (->> clause (postwalk-replace predicate-symbols)))
 
 (defmacro where [clause]
   (where* clause))
