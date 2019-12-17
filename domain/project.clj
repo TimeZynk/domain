@@ -6,7 +6,7 @@
   :scm {:name "git"
         :url  "https://github.com/TimeZynk/domain"}
   :dependencies [[com.novemberain/validateur "1.2.0"]
-                 [com.timezynk/useful "1.8.0-SNAPSHOT"]
+                 [com.timezynk/useful "1.8.0"]
                  [org.clojure/clojure "1.10.1" :scope "provided"]
                  [slingshot "0.12.2"]
                  [com.timezynk/assembly-line "1.0.0"]
