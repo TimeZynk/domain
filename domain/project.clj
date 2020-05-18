@@ -12,4 +12,5 @@
                  [com.timezynk/assembly-line "1.0.0"]
                  [compojure "1.5.1" :scope "provided"]
                  [congomongo "2.1.0" :scope "provided"]]
-  :repl-options {:init-ns com.timezynk.domain.core})
+  :repl-options {:init-ns com.timezynk.domain.core}
+  :plugins [[lein-cljfmt "0.6.7"]])

@@ -1,18 +1,17 @@
 (ns com.timezynk.domain.mongo.channel
   (:require
-    [com.timezynk.useful.channel :as c]
-    [com.timezynk.useful.mongo.db :refer [db]]
-    [com.timezynk.useful.prometheus.core :as metrics]
-    [somnium.congomongo :as mongo]
-  ))
+   [com.timezynk.useful.channel :as c]
+   [com.timezynk.useful.mongo.db :refer [db]]
+   [com.timezynk.useful.prometheus.core :as metrics]
+   [somnium.congomongo :as mongo]))
 
 (def ^:const WAIT_TIMEOUT 10000)
 
 (defonce channel (atom nil))
 
 (defonce handler-time (metrics/counter :channel_handler_time_seconds
-                                      "A counter of the total user time used for a handler"
-                                      :function))
+                                       "A counter of the total user time used for a handler"
+                                       :function))
 
 (defn f-wrapper [f]
   (let [fn-name (str f)]
@@ -26,7 +25,7 @@
   (when (and topic cname (or (seq new) (seq old)))
     (binding [c/*debug* false]
       (->> (map vector (or new (repeat nil))
-                       (or old (repeat nil)))
+                (or old (repeat nil)))
            (c/publish! @channel topic cname)
            (c/wait-for WAIT_TIMEOUT)))))
 
@@ -40,8 +39,8 @@
    Topic can be an array of topic or just a single topic."
   ([topic f] (subscribe topic nil f))
   ([topic collection-name f]
-    (init-channel)
-    (c/subscribe-request-response topic collection-name (f-wrapper f))))
+   (init-channel)
+   (c/subscribe-request-response topic collection-name (f-wrapper f))))
 
 (defn subscribe-broadcast
   "Add new request subscriber to topic. Messages are sent with lower priority and the next message is sent immediately.

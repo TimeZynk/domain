@@ -1,14 +1,15 @@
 (ns com.timezynk.domain.middleware
   (:require
    [clojure.core.reducers :as r]
-   [cheshire.core :refer [parse-string]]))
+   [cheshire.core :refer [parse-string]]
+   clojure.string))
 
 (defn- v-vector [v]
   (clojure.string/split v #"\;"))
 
 (defn- set-value [v]
-  (if-not (or (= "null" v)
-              (= "nil" v))
+  (when-not (or (= "null" v)
+                (= "nil" v))
     v))
 
 (defn- collect-param-value [v]
@@ -20,12 +21,12 @@
   (let [[_ n op]  (or (re-find #"^([a-z-_A-Z]+)\[([a-z]+)\]" k)
                       (re-find #"^([a-zA-Z0-9\-_.]+)" k))
         prop-name (keyword n)
-        op        (if-not (nil? op)
+        op        (when-not (nil? op)
                     (keyword (str "_" op "_")))
         v         (set-value v)]
     (cond
       (= :_collect_ op) [:_collect_ {prop-name (collect-param-value v)}]
-      (= :_in_ op)      [prop-name, {op (if-not (nil? v) (v-vector v))}]
+      (= :_in_ op)      [prop-name, {op (when-not (nil? v) (v-vector v))}]
       op                [prop-name, {op v}]
       :else             [prop-name, v])))
 
@@ -33,7 +34,7 @@
   (try
     (->> (parse-string q true)
          (into []))
-    (catch Exception e
+    (catch Exception _e
       [])))
 
 (defn- split-params [query]
@@ -50,7 +51,7 @@
             {}
             v))
 
-(defn- parse-params [request]
+(defn parse-params [request]
   (let [{:keys [query-params]} request]
     (->> (dissoc query-params "q")
          (map parse-query-param)
