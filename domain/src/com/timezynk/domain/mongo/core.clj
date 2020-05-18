@@ -1,7 +1,7 @@
 (ns com.timezynk.domain.mongo.core
   "A persistence layer aimed at MongoDB with versioned collection"
   (:refer-clojure :exclude [compile conj! disj!])
-  (:require 
+  (:require
    [clojure.core.reducers :as r]
    [clojure.set :refer [rename-keys]]
    [clojure.walk :refer [postwalk-replace]]
@@ -10,12 +10,12 @@
    [com.timezynk.useful.mongo.db :refer [db]]
    [com.timezynk.useful.rest.current-user :as current-session]
    [somnium.congomongo :as mongo]
-   com.timezynk.domain.mongo.predicates
-   )
+   com.timezynk.domain.mongo.predicates)
   (:import [org.bson.types ObjectId]))
 
 
                                         ; handy
+
 
 (def ^:const DISTINCT_LIMIT 60000)
 
@@ -129,10 +129,11 @@
                                         :user-id (or (current-session/user-id) (:changed-by new-doc))}))
           _           (mongo/destroy! cname (assoc restriction :valid-to now))
           newlings    (map rename-ids-out newlings)
-          oldies      (map rename-ids-out oldies)
-          ]
+          oldies      (map rename-ids-out oldies)]
 
       ; (debug (.getName (Thread/currentThread)) "update! completed for" cname)
+
+
       (mchan/put! :update cname newlings oldies)
       ; (debug (.getName (Thread/currentThread)) "update! mchan/put! completed for" cname)
       newlings)))
@@ -145,9 +146,9 @@
           result      (mongo/destroy! cname {:_id {:$in ids}})
           deleted-by  (current-session/user-id)
           oldies      (map rename-ids-out
-                        (map
-                          (fn [o] (assoc o :deleted-by deleted-by))
-                          oldies))]
+                           (map
+                            (fn [o] (assoc o :deleted-by deleted-by))
+                            oldies))]
       (mchan/put! :delete cname nil oldies)
       {:deleted-no (.getN result)})))
 
@@ -213,30 +214,30 @@
 
 (defn shift-version-info* [entries]
   (r/reduce
-    (fn [{:keys [entries log-info]} entry]
-      (let [log-info (or log-info (created-info entry))]
-        {:entries (conj entries (assoc entry :log-info log-info))
-         :log-info (:log-info entry)}))
-    {:entries []} entries))
+   (fn [{:keys [entries log-info]} entry]
+     (let [log-info (or log-info (created-info entry))]
+       {:entries (conj entries (assoc entry :log-info log-info))
+        :log-info (:log-info entry)}))
+   {:entries []} entries))
 
 (defn shift-version-info [latest entries]
   (let [{:keys [entries log-info]} (shift-version-info* entries)]
     (if latest
       (conj entries
-        (assoc latest :log-info (or log-info (created-info latest))))
+            (assoc latest :log-info (or log-info (created-info latest))))
       (if log-info
         (conj entries
-          (assoc (last entries) :log-info log-info))
+              (assoc (last entries) :log-info log-info))
         entries))))
 
 (defn same-change? [{log-a :log-info arch-a :archived} {log-b :log-info arch-b :archived}]
   (and
-    (= (:user-id log-a) (:user-id log-b))
-    (= (:type log-a) (:type log-b))
-    (= arch-a arch-b)
-    (:tstamp log-a)
-    (:tstamp log-b)
-    (> DISTINCT_LIMIT (Math/abs (- (:tstamp log-b) (:tstamp log-a))))))
+   (= (:user-id log-a) (:user-id log-b))
+   (= (:type log-a) (:type log-b))
+   (= arch-a arch-b)
+   (:tstamp log-a)
+   (:tstamp log-b)
+   (> DISTINCT_LIMIT (Math/abs (- (:tstamp log-b) (:tstamp log-a))))))
 
 (defn join-close-entries [entries]
   (if (seq entries)
@@ -254,26 +255,26 @@
 
 (defn fetch-log
   ([cname params]
-    (fetch-log cname params
-      (rename-ids-out
-        (mongo/fetch-one cname :where {:_name (:id params) :valid-to nil}))))
+   (fetch-log cname params
+              (rename-ids-out
+               (mongo/fetch-one cname :where {:_name (:id params) :valid-to nil}))))
   ([cname {:keys [id company-id booked-users]} latest]
-    (let [id (um/object-id id)
-          completed (um/object-id company-id)]
-      (->> (mongo/fetch :domainlog
-                        :where (merge
-                                {:collection (name cname)
-                                 :oldies._name id
-                                 :company-id company-id}
-                                (when booked-users
-                                  {:oldies.booked-users (um/object-id booked-users)}))
-                        :sort {:tstamp 1}
-                        :hint "oldies._name_1")
-           (r/mapcat add-change-metas)
-           (r/filter (fn [d] (and (= (:_name d) id) (= (:company-id d) company-id))))
-           (r/map rename-ids-out)
-           (shift-version-info latest)
-           (join-close-entries)))))
+   (let [id (um/object-id id)
+         completed (um/object-id company-id)]
+     (->> (mongo/fetch :domainlog
+                       :where (merge
+                               {:collection (name cname)
+                                :oldies._name id
+                                :company-id company-id}
+                               (when booked-users
+                                 {:oldies.booked-users (um/object-id booked-users)}))
+                       :sort {:tstamp 1}
+                       :hint "oldies._name_1")
+          (r/mapcat add-change-metas)
+          (r/filter (fn [d] (and (= (:_name d) id) (= (:company-id d) company-id))))
+          (r/map rename-ids-out)
+          (shift-version-info latest)
+          (join-close-entries)))))
 
                                         ; MongoCollection
 
@@ -314,13 +315,13 @@
     (let [restriction (merge restriction predicate)
           wresult     (destroy-fn! cname restriction)]
       (assoc this :query-result wresult
-                  :restriction  restriction)))
+             :restriction  restriction)))
 
   (update-in! [this predicate new-doc]
     (let [restriction (merge restriction predicate)
           result      (update-fn! cname restriction new-doc)]
       (assoc this :query-result result
-                  :restriction  restriction))))
+             :restriction  restriction))))
 
 (defmethod print-method MongoCollection [mcol ^java.io.Writer w]
   (when *debug*
@@ -335,11 +336,11 @@
 
 (defn mongo-collection [cname skip-logging]
   (map->MongoCollection
-    (merge
-      {:cname cname
-       :restriction {}}
-      (if skip-logging
-        {:update-fn! update-fast!
-         :destroy-fn! destroy-fast!}
-        {:update-fn! update!
-         :destroy-fn! destroy!}))))
+   (merge
+    {:cname cname
+     :restriction {}}
+    (if skip-logging
+      {:update-fn! update-fast!
+       :destroy-fn! destroy-fast!}
+      {:update-fn! update!
+       :destroy-fn! destroy!}))))

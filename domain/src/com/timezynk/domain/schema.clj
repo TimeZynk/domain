@@ -7,8 +7,7 @@
    [clojure.string :refer [trim]]
    [com.timezynk.useful.mongo :as um]
    [com.timezynk.domain.update-leafs :refer [update-leafs]]
-   [com.timezynk.useful.rest.current-user :as current-session]
-   )
+   [com.timezynk.useful.rest.current-user :as current-session])
   (:import [org.bson.types ObjectId]))
 
 (def ^:const NAME_MIN_BYTES 1)

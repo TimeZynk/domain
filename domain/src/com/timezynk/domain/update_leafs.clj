@@ -4,6 +4,7 @@
 
                                         ; Update leafs
 
+
 (declare update-leafs*)
 
 (defn- update-value [trail fun & args]
@@ -30,6 +31,7 @@
 
 
                                         ; With Directives
+
 
 (declare walk-directives)
 

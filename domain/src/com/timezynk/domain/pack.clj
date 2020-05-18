@@ -7,11 +7,11 @@
    [com.timezynk.domain.update-leafs :refer [update-leafs]]
    [com.timezynk.useful.date :as ud]
    [com.timezynk.useful.mongo :as um :refer [object-id? intersecting-query start-inside-period-query]]
-   [slingshot.slingshot :refer [throw+]]
-  ))
+   [slingshot.slingshot :refer [throw+]]))
 
 
                                         ;pack query
+
 
 (def mongo-operators {:_from_ :$gte
                       :_to_   :$lte
@@ -97,6 +97,7 @@
 
                                         ; pack collects
 
+
 (defn- pack-collect [properties [property-name options]]
   (let [{:keys [collection
                 domain-type?
@@ -135,6 +136,7 @@
 
 
                                         ; pack body
+
 
 (defn pack-doc
   "Converts the document from a document with values in \"client types\",

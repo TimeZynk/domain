@@ -23,7 +23,6 @@
                                                             :_lte_ "10"}}})]
     (is (= {:grade {:$gte 4 :$lte 10}} q))))
 
-
 (deftest pack-id-range-query
   (let [q (p/pack-query coll {:domain-query-params {:related-id {:_gte_ "5ec25abf087fec363a7f15f2"
                                                                  :_lte_ "5ec25ac4087fec363a7f15f3"}}})]

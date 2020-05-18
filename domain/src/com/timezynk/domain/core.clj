@@ -12,12 +12,12 @@
    [com.timezynk.useful.date :as ud]
    [com.timezynk.useful.rest :refer [json-response etag-response]]
    [compojure.core :refer [routes GET POST PUT PATCH DELETE]]
-   [slingshot.slingshot :refer [throw+]]
-  )
+   [slingshot.slingshot :refer [throw+]])
   (:import [org.joda.time DateTime]))
 
 
                                         ;Aliases
+
 
 (defmacro where [clause]
   (m/where* clause))
@@ -207,10 +207,10 @@
                ]
            [property-name
             (map #(assoc %
-                    :company-id (get added-doc :company-id)
-                    name-id (get added-doc :id)
+                         :company-id (get added-doc :company-id)
+                         name-id (get added-doc :id)
                     ;vid     (get added-doc :vid)
-                    )
+                         )
                  m)]))
        ref-docs))
 
@@ -234,8 +234,7 @@
   (fn [{:keys [collection properties]} doc]
     (let [docs       (if (map? doc) [doc] doc)
           core-docs  (r/map (partial handle-ref-resources properties :remove) docs)
-          added-docs @(-> (m/conj! collection core-docs))
-          ]
+          added-docs @(-> (m/conj! collection core-docs))]
       (doall (map (partial insert-ref-docs! properties) docs added-docs))
       added-docs)))
 
@@ -297,12 +296,13 @@
                     :environment))
 
 (def fetch-count (partial assembly-line
-                    [:execute execute-count
-                     :deref []]
-                    :environment))
+                          [:execute execute-count
+                           :deref []]
+                          :environment))
 
 
                                         ; Constructor
+
 
 (defn dom-type-collection [& {:as options}]
   {:pre [(get options :properties)
@@ -321,15 +321,15 @@
 
                                         ; HTTP routes
 
+
 (defn- add-stations* [line stations]
   (if (sequential? stations)
     (let [add-s (->> stations
-                 (partition 3)
-                 (map (fn [st]
-                        (fn [line]
-                          (apply line/add-stations line st))))
-                 (apply comp))
-          ]
+                     (partition 3)
+                     (map (fn [st]
+                            (fn [line]
+                              (apply line/add-stations line st))))
+                     (apply comp))]
       (add-s line))
     line))
 
@@ -347,12 +347,12 @@
 (defn dom-http-headers [restriction last-modified]
   (when last-modified
     (merge
-      {"Last-Modified" (ud/to-rfc-1123 last-modified)}
-      (if (= #{:vid :id :company-id} (set (keys restriction)))
-        {"Cache-Control" "private"
-         "Expires" (ud/to-rfc-1123 (.plus last-modified 1209600000))}
-        {"Cache-Control" "max-age=1,must-revalidate,private"
-         "Expires" nil}))))
+     {"Last-Modified" (ud/to-rfc-1123 last-modified)}
+     (if (= #{:vid :id :company-id} (set (keys restriction)))
+       {"Cache-Control" "private"
+        "Expires" (ud/to-rfc-1123 (.plus last-modified 1209600000))}
+       {"Cache-Control" "max-age=1,must-revalidate,private"
+        "Expires" nil}))))
 
 (defn last-modified [doc collects]
   (when (and (empty? collects) (map? doc))
