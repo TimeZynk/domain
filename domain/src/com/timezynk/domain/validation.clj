@@ -3,6 +3,9 @@
   (:require
    [clojure.core.reducers :as r]
    [clojure.set :refer [difference]]
+   [clojure.spec.alpha :as spec]
+   [clojure.string :as str]
+   [com.timezynk.useful.date :as ud]
    [slingshot.slingshot :refer [throw+]]
    [validateur.validation :as v])
   (:import [org.bson.types ObjectId]
@@ -312,3 +315,38 @@
       (throw+ {:type    :validation-error
                :message "The document is invalid."
                :errors  err-messages}))))
+
+(defn- valid-date-string? [v]
+  (or (ud/date-string? v) (ud/date-time-string? v)))
+
+(def match-param-values #{"start-in" "intersects"})
+(spec/def ::start valid-date-string?)
+(spec/def ::end valid-date-string?)
+(spec/def ::match #(contains? match-param-values %))
+
+(defn validate-interval-params! [{:keys [params]}]
+  (when-let [interval (:interval params)]
+    (let [start (:start interval)
+          end (:end interval)
+          match (:match interval)]
+
+    (when-not (spec/valid? ::start start)
+      (throw+ {:code 400
+               :message "When the interval parameter is used the interval[start] parameter is required and has to be a valid date string"
+               :error-code "INTERVAL_START_INVALID"}))
+
+    (when-not (spec/valid? ::end end)
+      (throw+ {:code 400
+               :message "When the interval parameter is used the interval[end] parameter is required and has to be a valid date string"
+               :error-code "INTERVAL_END_INVALID"}))
+
+    (when (< 0 (compare start end) )
+      (throw+ {:code 400
+               :message "The interval[end] parameter value has to be greater than or equal to interval[start]"
+               :error-code "INTERVAL_END_INVALID"}))
+
+    (when (and match (not (spec/valid? ::match match)))
+      (throw+ {:code 400
+               :message (str "Invalid value provided for interval[match] parameter. Valid values:" (str/join ", " match-param-values))
+               :error-code "INTERVAL_MATCH_INVALID"})))))
+
