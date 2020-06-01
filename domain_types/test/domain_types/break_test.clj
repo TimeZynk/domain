@@ -11,7 +11,6 @@
                          :end (ud/->local-datetime "2019-12-17T13:00:00")}]}]
       (is (= doc (b/validate-breaks! nil doc))))))
 
-
 (deftest validate-double
   (testing "Double break"
     (let [doc {:start (ud/->local-datetime "2019-12-17T08:00:00")
