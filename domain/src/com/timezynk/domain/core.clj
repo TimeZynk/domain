@@ -12,7 +12,8 @@
    [com.timezynk.useful.date :as ud]
    [com.timezynk.useful.rest :refer [json-response etag-response]]
    [compojure.core :refer [routes GET POST PUT PATCH DELETE]]
-   [slingshot.slingshot :refer [throw+]])
+   [slingshot.slingshot :refer [throw+]]
+   clojure.string)
   (:import [org.joda.time DateTime]))
 
 
