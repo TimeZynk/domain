@@ -7,9 +7,7 @@
    [com.timezynk.domain.update-leafs :refer [update-leafs]]
    [com.timezynk.useful.date :as ud]
    [com.timezynk.useful.mongo :as um :refer [object-id? intersecting-query start-inside-period-query]]
-   [slingshot.slingshot :refer [throw+]]
-  ))
-
+   [slingshot.slingshot :refer [throw+]]))
 
                                         ;pack query
 
@@ -45,6 +43,16 @@
           (let [[head & tail] trail
                 [tail-head]   tail]
             (cond
+              (and (keyword? head)
+                   (s/includes? (name head) "."))
+              (let [raw-trail (-> head
+                                  (name)
+                                  (s/split #"\."))
+                    next-trail (->> raw-trail
+                                    (r/map keyword)
+                                    (into []))]
+                (recur next-trail
+                       path))
               (= [] tail-head) (let [tail (rest tail)]
                                  (recur tail
                                         (conj path head
@@ -94,7 +102,6 @@
         (pack-query-parameters properties)
         (replace-with-mongo-operators))))
 
-
                                         ; pack collects
 
 (defn- pack-collect [properties [property-name options]]
@@ -132,7 +139,6 @@
                (fn [[k p]]
                  (get p flag))
                properties))))
-
 
                                         ; pack body
 
