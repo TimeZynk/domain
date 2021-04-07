@@ -28,3 +28,9 @@
                                                                  :_lte_ "5ec25ac4087fec363a7f15f3"}}})]
     (is (= {:related-id {:$gte (um/object-id "5ec25abf087fec363a7f15f2")
                          :$lte (um/object-id "5ec25ac4087fec363a7f15f3")}} q))))
+
+(deftest pack-dot-notation
+  (testing "Should build path when path is defined as keyword with dot notation"
+    (let [trail '(:relations.outgoing-rfq-id)
+          result (p/get-type-path trail)]
+      (is (= result [:relations :properties :outgoing-rfq-id :type])))))
