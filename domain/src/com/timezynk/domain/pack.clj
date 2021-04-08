@@ -9,7 +9,6 @@
    [com.timezynk.useful.mongo :as um :refer [object-id? intersecting-query start-inside-period-query]]
    [slingshot.slingshot :refer [throw+]]))
 
-
                                         ;pack query
 
 
@@ -45,6 +44,16 @@
           (let [[head & tail] trail
                 [tail-head]   tail]
             (cond
+              (and (keyword? head)
+                   (s/includes? (name head) "."))
+              (let [next-trail (-> head
+                                   (name)
+                                   (s/split #"\.")
+                                   (->> (r/map keyword)
+                                        (into []))
+                                   (concat tail))]
+                (recur next-trail
+                       path))
               (= [] tail-head) (let [tail (rest tail)]
                                  (recur tail
                                         (conj path head
@@ -94,7 +103,6 @@
         (pack-query-parameters properties)
         (replace-with-mongo-operators))))
 
-
                                         ; pack collects
 
 
@@ -133,7 +141,6 @@
                (fn [[k p]]
                  (get p flag))
                properties))))
-
 
                                         ; pack body
 
