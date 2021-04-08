@@ -9,7 +9,7 @@
    [com.timezynk.useful.mongo :as um :refer [object-id? intersecting-query start-inside-period-query]]
    [slingshot.slingshot :refer [throw+]]))
 
-                                       ;pack query
+                                        ;pack query
 
 
 (def mongo-operators {:_from_ :$gte
@@ -142,7 +142,7 @@
                  (get p flag))
                properties))))
 
-                                         ; pack body
+                                        ; pack body
 
 
 (defn pack-doc
