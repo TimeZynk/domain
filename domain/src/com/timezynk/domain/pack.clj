@@ -46,12 +46,12 @@
             (cond
               (and (keyword? head)
                    (s/includes? (name head) "."))
-              (let [raw-trail (-> head
-                                  (name)
-                                  (s/split #"\."))
-                    next-trail (->> raw-trail
-                                    (r/map keyword)
-                                    (into []))]
+              (let [next-trail (-> head
+                                   (name)
+                                   (s/split #"\.")
+                                   (->> (r/map keyword)
+                                        (into []))
+                                   (concat tail))]
                 (recur next-trail
                        path))
               (= [] tail-head) (let [tail (rest tail)]
