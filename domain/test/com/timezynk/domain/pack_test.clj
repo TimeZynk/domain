@@ -31,19 +31,19 @@
 
 (deftest get-type-path-test
   (testing "Should build path when path is defined from nested map structure"
-    (let [trail '(:id :outgoing-rfq-id :relations :wrapper)
+    (let [trail '(:id :to :path :some)
           result (p/get-type-path trail)]
-      (is (= result [:wrapper :properties :relations :properties :outgoing-rfq-id :properties :id :type]))))
+      (is (= result [:some :properties :path :properties :to :properties :id :type]))))
 
   (testing "Should build path when path is defined as keyword with dot notation"
-    (let [trail '(:relations.outgoing-rfq-id)
+    (let [trail '(:some.path)
           result (p/get-type-path trail)]
-      (is (= result [:relations :properties :outgoing-rfq-id :type]))))
+      (is (= result [:some :properties :path :type]))))
 
   (testing "Should build path when path is defined with dot notation and has nested map"
-    (let [trail '(:id :relations.outgoing-rfq-id :wrapper)
+    (let [trail '(:id :path.to :some)
           result (p/get-type-path trail)]
-      (is (= result [:wrapper :properties :relations :properties :outgoing-rfq-id :properties :id :type])))))
+      (is (= result [:some :properties :path :properties :to :properties :id :type])))))
 
 (deftest pack-query-nested-query
   (let [dtc {:properties

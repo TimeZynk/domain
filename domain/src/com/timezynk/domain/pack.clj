@@ -103,7 +103,7 @@
         (pack-query-parameters properties)
         (replace-with-mongo-operators))))
 
-                                       ; pack collects
+                                        ; pack collects
 
 
 (defn- pack-collect [properties [property-name options]]
@@ -142,7 +142,7 @@
                  (get p flag))
                properties))))
 
-                                       ; pack body
+                                         ; pack body
 
 
 (defn pack-doc
