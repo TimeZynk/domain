@@ -114,7 +114,7 @@
                   (into #{} v)
                   (disj v nil))]
 
-    (when (and (seq ids) (pos? @(m/select-count (:collection name) {:id {:$in ids}})))
+    (when (and (seq ids) (pos? @(m/select-count (:collection dtc) {:id {:$in ids}})))
       (throw+ {:code 409
                :type :conflict
                :errors [(str  "Conflict. Id already exists in " (-> dtc :name name) " collection")]}))
