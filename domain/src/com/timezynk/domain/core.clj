@@ -107,6 +107,19 @@
   (v/validate-json-input! properties doc)
   doc)
 
+(defn validate-id-availability [dtc doc]
+  (let [docs (if (map? doc) [doc] doc)
+        ids (as-> docs v
+                  (r/map :id v)
+                  (into #{} v)
+                  (disj v nil))]
+
+    (when (and (seq ids) (pos? @(m/select-count (:collection dtc) {:id {:$in ids}})))
+      (throw+ {:code 409
+               :type :conflict
+               :errors [(str  "Conflict. Id already exists in " (-> dtc :name name) " collection")]}))
+    doc))
+
 (defn pack-doc
   "Convert the document values, from json types to server types."
   [collection doc]
@@ -272,7 +285,8 @@
                       [:validate     [validate-doc-input!
                                       (partial validate-properties! false)
                                       validate-properties2!
-                                      validate-doc!]
+                                      validate-doc!
+                                      validate-id-availability]
                        :pre-process  [add-default-values (add-derived-values false)]
                        :execute      execute-insert!
                        :deref        deref-steps]
@@ -573,3 +587,4 @@
                           (add-stations* delete)
                           deref
                           json-response))))))))))
+
