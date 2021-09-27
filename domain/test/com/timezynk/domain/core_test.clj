@@ -1,5 +1,5 @@
 (ns com.timezynk.domain.core-test
-  (:require [clojure.test :refer :all]
+  (:require [clojure.test :refer [deftest is testing]]
             [com.timezynk.domain.core :as c]
             [com.timezynk.domain.schema :as s]))
 

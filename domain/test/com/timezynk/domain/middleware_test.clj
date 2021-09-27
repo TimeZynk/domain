@@ -1,6 +1,6 @@
 (ns com.timezynk.domain.middleware-test
   (:require
-   [clojure.test :refer :all]
+   [clojure.test :refer [deftest is]]
    [com.timezynk.domain.middleware :as m]
    [com.timezynk.domain.core :as c]
    [com.timezynk.domain.schema :as s]))
