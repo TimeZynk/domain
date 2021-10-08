@@ -5,8 +5,7 @@
    [clojure.tools.logging :as log]
    [com.timezynk.domain.validation.check :refer [check]]
    [com.timezynk.domain.validation.validate-type :refer [validate-type]]
-   [com.timezynk.domain.validation.operator.all-of :refer [all-of]]
-   [spy.core :as spy]))
+   [com.timezynk.domain.validation.operator.all-of :refer [all-of]]))
 
 (declare validate-schema)
 
