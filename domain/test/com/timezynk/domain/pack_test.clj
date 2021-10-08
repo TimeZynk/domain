@@ -1,6 +1,6 @@
 (ns com.timezynk.domain.pack-test
   (:require
-   [clojure.test :refer :all]
+   [clojure.test :refer [deftest is testing]]
    [com.timezynk.domain.pack :as p]
    [com.timezynk.domain.core :as c]
    [com.timezynk.domain.schema :as s]
