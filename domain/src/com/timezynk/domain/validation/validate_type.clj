@@ -37,6 +37,26 @@
     :any       (fn [_] [true #{}])
     [false {attr-name {"unknown type" (name type-name)}}]))
 
+(deftest test-object-id
+  (is (object-id? (ObjectId.)))
+  (is (not (object-id? (str (ObjectId.))))))
+
+(deftest test-time
+  (is (time? (LocalTime. "12.03")))
+  (is (not (time? "12.03"))))
+
+(deftest test-date-time
+  (is (date-time? (LocalDateTime. "2020-10-01T12.03")))
+  (is (not (date-time? (LocalTime. "12.03")))))
+
+(deftest test-date
+  (is (date? (LocalDate. "2020-10-01")))
+  (is (not (date? (LocalDateTime. "2020-10-01")))))
+
+(deftest test-timestamp
+  (is (timestamp? 12345))
+  (is (not (timestamp? -12345))))
+
 (deftest test-validate-type
   (with-redefs [check (spy/spy check)]
     (is (= [true {}]

@@ -1,11 +1,12 @@
-(ns com.timezynk.domain.validation.validate-property
+(ns com.timezynk.domain.validation.validate
   (:require
    [clojure.core.reducers :as r]
    [clojure.test :refer [deftest is testing]]
-   [clojure.tools.logging :as log]
    [com.timezynk.domain.validation.check :refer [check]]
+   [com.timezynk.domain.validation.only-these :refer [only-these]]
+   [com.timezynk.domain.validation.set :refer [all-of]]
    [com.timezynk.domain.validation.validate-type :refer [validate-type]]
-   [com.timezynk.domain.validation.operator.all-of :refer [all-of]]))
+   [spy.core :as spy]))
 
 (declare validate-schema)
 
@@ -42,7 +43,6 @@
 ;; todo: this is UGLY! this should not be done here...
 ;; updated 2021-09-27: better handling of null values during update
 (defn- escape-optional? [property property-value all-optional?]
-  (log/spy "ESCAPE-OPTIONAL")
   (let [[property-name property-definition] property]
     (or (and all-optional?
              (not (contains? property-value property-name)))
@@ -70,6 +70,78 @@
                                                           (get-check-fn all-optional? k property-name v)))
                                                    (apply all-of))]
       (validator property-value))))
+
+(defn validate-schema [all-optional? schema m]
+  (let [{:keys [properties]} schema
+        only-these-keys      (apply only-these (keys properties))
+        rule                 (->> properties
+                                  (map #(partial validate-property % all-optional?))
+                                  (cons only-these-keys)
+                                  (apply all-of))]
+    (rule m)))
+
+(deftest test-validate-vector
+  (is (= [true {:field {}}]
+         (validate-vector false :field :string ["123"])))
+  (is (= [true {:field {}}]
+         (validate-vector false :field :number ["123"])))
+  (is (= [true {:field {}}]
+         (validate-vector false
+                          :field
+                          {:properties {:field {:type :string}}}
+                          [{:field "123"}])))
+  (is (= [false {:field {:field1 "not a number"}}]
+         (validate-vector false
+                          :field
+                          {:properties {:field1 {:type :number}}}
+                          [{:field1 "123"}])))
+  (is (= [false {:field {:field1 "required property has no value"
+                         :field2 "invalid attribute"}}]
+         (validate-vector false
+                          :field
+                          {:properties {:field1 {:type :string}}}
+                          [{:field2 "123"}])))
+  (is (= [false {:field {:vector "not sequential"}}]
+         (validate-vector false :field :string "123"))))
+
+(deftest test-get-check-fn
+  (with-redefs [check (spy/stub)]
+    (get-check-fn false :min :field 1)
+    (is (spy/call-matching? check (fn [l]
+                                    (is (fn? (first l)))
+                                    (is ((first l) 2))
+                                    (is (= :field (second l)))
+                                    (is (= "smaller than 1" (last l)))))))
+  (with-redefs [check (spy/stub)]
+    (get-check-fn false :max :field 1)
+    (is (spy/call-matching? check (fn [l]
+                                    (is (fn? (first l)))
+                                    (is ((first l) 0))
+                                    (is (= :field (second l)))
+                                    (is (= "bigger than 1" (last l)))))))
+  (with-redefs [validate-type (spy/stub)]
+    (get-check-fn false :type :field :string)
+    (is (spy/called-with? validate-type :field :string)))
+  (with-redefs [validate-schema (spy/stub)]
+    (let [res (get-check-fn false :properties :field :string)]
+      (is (fn? res))
+      (res "123")
+      (is (spy/called-with? validate-schema false {:properties :string} "123"))))
+  (with-redefs [validate-vector (spy/stub)]
+    (let [res (get-check-fn false :children :field :string)]
+      (is (fn? res))
+      (res "123")
+      (is (spy/called-with? validate-vector false :field :string "123"))))
+  (with-redefs [check (spy/stub)]
+    (get-check-fn false :in :field {:field :string})
+    (is (spy/call-matching? check (fn [l]
+                                    (is (fn? (first l)))
+                                    (is ((first l) :field))
+                                    (is (= :field (second l)))
+                                    (is (= "not in {:field :string}" (last l)))))))
+  (is (thrown-with-msg? java.lang.IllegalArgumentException
+                        #"No matching clause"
+                        (= "" (get-check-fn false :else "" "")))))
 
 (deftest test-escape-optional?
   (testing "A required field that is missing at creation should be checked"
@@ -122,3 +194,45 @@
          (validate-property [:field {:type :date-time}]
                             false
                             {:field "abc"}))))
+
+(deftest test-validate-schema
+  (is (= [true {}]
+         (validate-schema false
+                          {:properties {:field1 {:type :string}
+                                        :field2 {:type :number :optional? true}}}
+                          {:field1 "123"
+                           :field2 nil})))
+  (is (= [false {:field1 "required property has no value"}]
+         (validate-schema false
+                          {:properties {:field1 {:type :string}}}
+                          {:field1 nil})))
+  (is (= [false {:field1 "not a string"}]
+         (validate-schema false
+                          {:properties {:field1 {:type :string}}}
+                          {:field1 123})))
+  (is (= [true {}]
+         (validate-schema true
+                          {:properties {:field1 {:type :string}
+                                        :field2 {:type :number}}}
+                          {:field1 "123"})))
+  (is (= [true {}]
+         (validate-schema false
+                          {:properties {:values {:type :vector
+                                                 :children {:type :string}}}}
+                          {:values ["123"]})))
+  (is (= [false {:values {:vector "not sequential"}}]
+         (validate-schema false
+                          {:properties {:values {:type :vector
+                                                 :children {:type :string}}}}
+                          {:values "123"})))
+  (is (= [true {}]
+         (validate-schema false
+                          {:properties {:values {:type :map
+                                                 :properties {:field2 {:type :string}}}}}
+                          {:values {:field2 "123"}})))
+  (is (thrown?
+       java.lang.ClassCastException
+       (validate-schema false
+                        {:properties {:values {:type :map
+                                               :properties {:field2 {:type :string}}}}}
+                        {:values "123"}))))

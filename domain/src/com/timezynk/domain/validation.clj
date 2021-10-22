@@ -3,19 +3,36 @@
   (:require
    [clojure.spec.alpha :as spec]
    [clojure.string :as str]
+   [com.timezynk.domain.validation.compare :as compare]
    [com.timezynk.domain.validation.only-these :refer [only-these]]
-   [com.timezynk.domain.validation.validate-property :refer [validate-property]]
-   [com.timezynk.domain.validation.validate-schema :refer [validate-schema]]
-   [com.timezynk.domain.validation.operator.all-of :refer [all-of]]
+   [com.timezynk.domain.validation.set :as set]
+   [com.timezynk.domain.validation.validate :refer [validate-property validate-schema]]
    [com.timezynk.useful.date :as ud]
    [slingshot.slingshot :refer [throw+]]))
+
+;; --------------------
+
+(def all-of         set/all-of)
+(def some-of        set/some-of)
+(def none-of        set/none-of)
+(def one-of         set/one-of)
+(def has            set/has)
+(def has-not        set/has-not)
+
+;; --------------------
+
+(def lt    compare/lt)
+(def lt=   compare/lt=)
+(def eq    compare/eq)
+
+;; --------------------
 
 (defn validate-properties [all-optional? properties doc]
   (let [only-these-keys (apply only-these (keys properties))
         rule            (->> properties
                              (map #(partial validate-property % all-optional?))
                              (cons only-these-keys)
-                             (apply all-of))]
+                             (apply set/all-of))]
     (rule doc)))
 
 (defn validate-schema!
