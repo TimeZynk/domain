@@ -12,7 +12,8 @@
 
 ;; --------------------
 
-(def all-of         set/all-of)
+(defn all-of [& rules]
+  (apply set/all-of rules))
 (def some-of        set/some-of)
 (def none-of        set/none-of)
 (def one-of         set/one-of)
@@ -21,6 +22,10 @@
 
 ;; --------------------
 
+(def <or= compare/<or=)
+(def >or= compare/>or=)
+(def >not= compare/>not=)
+(def <not= compare/<not=)
 (def lt    compare/lt)
 (def lt=   compare/lt=)
 (def eq    compare/eq)

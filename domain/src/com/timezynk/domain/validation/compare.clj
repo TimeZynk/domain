@@ -3,6 +3,18 @@
    [clojure.test :refer [deftest is testing]])
   (:import [org.joda.time LocalDateTime LocalDate LocalTime]))
 
+(defn <or= [a b]
+  (<= (compare a b) 0))
+
+(defn >or= [a b]
+  (>= (compare a b) 0))
+
+(defn >not= [a b]
+  (> (compare a b) 0))
+
+(defn <not= [a b]
+  (< (compare a b) 0))
+
 (defprotocol Compare
   (lt*  [x y] "x is less than y?")
   (lt=* [x y] "x is less than or equals y")
