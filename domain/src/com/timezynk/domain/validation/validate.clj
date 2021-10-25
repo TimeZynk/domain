@@ -47,7 +47,7 @@
     (or (and all-optional?
              (not (contains? property-value property-name)))
         (and (or (:optional? property-definition)
-                 (:default property-definition))
+                 (not (nil? (:default property-definition))))
              (nil? (property-name property-value)))
         (:computed property-definition)
         (:derived property-definition))))
@@ -167,6 +167,8 @@
     (is (not (escape-optional? [:field {:optional? true}] {:field 1} true)))
     (is (not (escape-optional? [:field {:default 1}] {:field 1} false)))
     (is (not (escape-optional? [:field {:default 1}] {:field 1} true))))
+  (testing "A not set field with default false should not be checked"
+    (is (escape-optional? [:field {:default false}] {} false)))
   (testing "A computed or derived field should never be checked"
     (is (escape-optional? [:field {:computed true}] {} false))
     (is (escape-optional? [:field {:computed true}] {} true))
