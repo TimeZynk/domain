@@ -44,7 +44,10 @@
     ;;:map        property-definition
     :in         (check #(contains? property-definition %)
                        property-name
-                       (str "not in " property-definition))))
+                       (str "not in " property-definition))
+    :regex      (check #(re-matches property-definition %)
+                       property-name
+                       (str "does not match " property-definition))))
 
 ;; todo: this is UGLY! this should not be done here...
 ;; updated 2021-09-27: better handling of null values during update
@@ -65,7 +68,8 @@
                       :type
                       :properties
                       :children
-                      :in])
+                      :in
+                      :regex])
 
 (defn validate-property [property all-optional? val]
   (if (escape-optional? property val all-optional?)
@@ -139,7 +143,19 @@
                           :field
                           {:properties {:field1 {:type :string
                                                  :min-length 1}}}
-                          [{:field1 ""}]))))
+                          [{:field1 ""}])))
+  (is (= [false {:field {:field1 "does not match [0-9]+"}}]
+         (validate-vector false
+                          :field
+                          {:properties {:field1 {:type :string
+                                                 :regex #"[0-9]+"}}}
+                          [{:field1 "abc"}])))
+  (is (= [true {:field {}}]
+         (validate-vector false
+                          :field
+                          {:properties {:field1 {:type :string
+                                                 :regex #"[0-9]+"}}}
+                          [{:field1 "0123"}]))))
 
 (deftest test-get-check-fn
   (with-redefs [check (spy/stub)]
