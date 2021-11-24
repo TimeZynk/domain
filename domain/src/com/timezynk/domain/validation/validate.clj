@@ -30,6 +30,12 @@
     :max        (check #(>= property-definition %)
                        property-name
                        (str "bigger than " property-definition))
+    :min-length (check #(<= property-definition (count %))
+                       property-name
+                       (str "shorter than " property-definition))
+    :max-length (check #(>= property-definition (count %))
+                       property-name
+                       (str "longer than " property-definition))
     :type       (validate-type property-name property-definition)
     ;;:vector    (partial validate-vector property-name property-definition)
     :properties #(validate-schema all-optional? {:properties property-definition} %)
@@ -54,6 +60,8 @@
 
 (def validation-keys [:min
                       :max
+                      :min-length
+                      :max-length
                       :type
                       :properties
                       :children
@@ -95,6 +103,11 @@
                           :field
                           {:properties {:field1 {:type :number}}}
                           [{:field1 "123"}])))
+  (is (= [false {:field {:field1 "not an integer"}}]
+         (validate-vector false
+                          :field
+                          {:properties {:field1 {:type :integer}}}
+                          [{:field1 123.45}])))
   (is (= [false {:field {:field1 "required property has no value"
                          :field2 "invalid attribute"}}]
          (validate-vector false
@@ -102,7 +115,31 @@
                           {:properties {:field1 {:type :string}}}
                           [{:field2 "123"}])))
   (is (= [false {:field {:vector "not sequential"}}]
-         (validate-vector false :field :string "123"))))
+         (validate-vector false :field :string "123")))
+  (is (= [false {:field {:field1 "smaller than 1"}}]
+         (validate-vector false
+                          :field
+                          {:properties {:field1 {:type :number
+                                                 :min 1}}}
+                          [{:field1 0}])))
+  (is (= [false {:field {:field1 "bigger than 1"}}]
+         (validate-vector false
+                          :field
+                          {:properties {:field1 {:type :number
+                                                 :max 1}}}
+                          [{:field1 2}])))
+  (is (= [false {:field {:field1 "longer than 1"}}]
+         (validate-vector false
+                          :field
+                          {:properties {:field1 {:type :string
+                                                 :max-length 1}}}
+                          [{:field1 "ab"}])))
+  (is (= [false {:field {:field1 "shorter than 1"}}]
+         (validate-vector false
+                          :field
+                          {:properties {:field1 {:type :string
+                                                 :min-length 1}}}
+                          [{:field1 ""}]))))
 
 (deftest test-get-check-fn
   (with-redefs [check (spy/stub)]
