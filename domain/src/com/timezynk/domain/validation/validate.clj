@@ -30,6 +30,12 @@
     :max        (check #(>= property-definition %)
                        property-name
                        (str "bigger than " property-definition))
+    :min-length (check #(<= property-definition (count %))
+                       property-name
+                       (str "shorter than " property-definition))
+    :max-length (check #(>= property-definition (count %))
+                       property-name
+                       (str "longer than " property-definition))
     :type       (validate-type property-name property-definition)
     ;;:vector    (partial validate-vector property-name property-definition)
     :properties #(validate-schema all-optional? {:properties property-definition} %)
@@ -38,7 +44,10 @@
     ;;:map        property-definition
     :in         (check #(contains? property-definition %)
                        property-name
-                       (str "not in " property-definition))))
+                       (str "not in " property-definition))
+    :regex      (check #(re-matches property-definition %)
+                       property-name
+                       (str "does not match " property-definition))))
 
 ;; todo: this is UGLY! this should not be done here...
 ;; updated 2021-09-27: better handling of null values during update
@@ -47,17 +56,20 @@
     (or (and all-optional?
              (not (contains? property-value property-name)))
         (and (or (:optional? property-definition)
-                 (not (nil? (:default property-definition))))
+                 (some? (:default property-definition)))
              (nil? (property-name property-value)))
         (:computed property-definition)
         (:derived property-definition))))
 
 (def validation-keys [:min
                       :max
+                      :min-length
+                      :max-length
                       :type
                       :properties
                       :children
-                      :in])
+                      :in
+                      :regex])
 
 (defn validate-property [property all-optional? val]
   (if (escape-optional? property val all-optional?)
@@ -95,6 +107,11 @@
                           :field
                           {:properties {:field1 {:type :number}}}
                           [{:field1 "123"}])))
+  (is (= [false {:field {:field1 "not an integer"}}]
+         (validate-vector false
+                          :field
+                          {:properties {:field1 {:type :integer}}}
+                          [{:field1 123.45}])))
   (is (= [false {:field {:field1 "required property has no value"
                          :field2 "invalid attribute"}}]
          (validate-vector false
@@ -237,4 +254,51 @@
        (validate-schema false
                         {:properties {:values {:type :map
                                                :properties {:field2 {:type :string}}}}}
-                        {:values "123"}))))
+                        {:values "123"})))
+  (is (= [true {}]
+         (validate-schema false
+                          {:properties {:values {:type :vector
+                                                 :children {:type :string}}}}
+                          {:values [123]})))
+  (is (= [false {:field "smaller than 1"}]
+         (validate-schema false
+                          {:properties {:field {:type :number
+                                                :min 1}}}
+                          {:field 0})))
+  (is (= [false {:field "bigger than 1"}]
+         (validate-schema false
+                          {:properties {:field {:type :number
+                                                :max 1}}}
+                          {:field 2})))
+  (is (= [false {:field "shorter than 1"}]
+         (validate-schema false
+                          {:properties {:field {:type :string
+                                                :min-length 1}}}
+                          {:field ""})))
+  (is (= [false {:field "longer than 1"}]
+         (validate-schema false
+                          {:properties {:field {:type :string
+                                                :max-length 1}}}
+                          {:field "ab"})))
+  (is (= [false {:field "shorter than 1"}]
+         (validate-schema false
+                          {:properties {:field {:type :vector
+                                                :children {:type :number}
+                                                :min-length 1}}}
+                          {:field []})))
+  (is (= [false {:field "longer than 1"}]
+         (validate-schema false
+                          {:properties {:field {:type :vector
+                                                :children {:type :number}
+                                                :max-length 1}}}
+                          {:field [1 2]})))
+  (is (= [false {:field "does not match [0-9]+"}]
+         (validate-schema false
+                          {:properties {:field {:type :string
+                                                :regex #"[0-9]+"}}}
+                          {:field "abc"})))
+  (is (= [true {}]
+         (validate-schema false
+                          {:properties {:field {:type :string
+                                                :regex #"[0-9]+"}}}
+                          {:field "0123"}))))

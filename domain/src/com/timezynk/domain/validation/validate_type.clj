@@ -25,6 +25,7 @@
   (case type-name
     :string    (check string?     attr-name "not a string")
     :number    (check number?     attr-name "not a number")
+    :integer   (check integer?    attr-name "not an integer")
     :duration  (check number?     attr-name "not a duration in milliseconds")
     :vector    (check sequential? attr-name "not sequential")
     :map       (check map?        attr-name "not a map")

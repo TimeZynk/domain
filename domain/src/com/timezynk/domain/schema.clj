@@ -24,6 +24,7 @@
 
 (def string    (t :string))
 (def number    (t :number))
+(def integer   (t :integer))
 (def boolean   (t :boolean))
 (def date      (t :date))
 (def date-time (t :date-time))
