@@ -56,7 +56,7 @@
     (or (and all-optional?
              (not (contains? property-value property-name)))
         (and (or (:optional? property-definition)
-                 (not (nil? (:default property-definition))))
+                 (some? (:default property-definition)))
              (nil? (property-name property-value)))
         (:computed property-definition)
         (:derived property-definition))))
@@ -119,43 +119,7 @@
                           {:properties {:field1 {:type :string}}}
                           [{:field2 "123"}])))
   (is (= [false {:field {:vector "not sequential"}}]
-         (validate-vector false :field :string "123")))
-  (is (= [false {:field {:field1 "smaller than 1"}}]
-         (validate-vector false
-                          :field
-                          {:properties {:field1 {:type :number
-                                                 :min 1}}}
-                          [{:field1 0}])))
-  (is (= [false {:field {:field1 "bigger than 1"}}]
-         (validate-vector false
-                          :field
-                          {:properties {:field1 {:type :number
-                                                 :max 1}}}
-                          [{:field1 2}])))
-  (is (= [false {:field {:field1 "longer than 1"}}]
-         (validate-vector false
-                          :field
-                          {:properties {:field1 {:type :string
-                                                 :max-length 1}}}
-                          [{:field1 "ab"}])))
-  (is (= [false {:field {:field1 "shorter than 1"}}]
-         (validate-vector false
-                          :field
-                          {:properties {:field1 {:type :string
-                                                 :min-length 1}}}
-                          [{:field1 ""}])))
-  (is (= [false {:field {:field1 "does not match [0-9]+"}}]
-         (validate-vector false
-                          :field
-                          {:properties {:field1 {:type :string
-                                                 :regex #"[0-9]+"}}}
-                          [{:field1 "abc"}])))
-  (is (= [true {:field {}}]
-         (validate-vector false
-                          :field
-                          {:properties {:field1 {:type :string
-                                                 :regex #"[0-9]+"}}}
-                          [{:field1 "0123"}]))))
+         (validate-vector false :field :string "123"))))
 
 (deftest test-get-check-fn
   (with-redefs [check (spy/stub)]
@@ -290,4 +254,51 @@
        (validate-schema false
                         {:properties {:values {:type :map
                                                :properties {:field2 {:type :string}}}}}
-                        {:values "123"}))))
+                        {:values "123"})))
+  (is (= [true {}]
+         (validate-schema false
+                          {:properties {:values {:type :vector
+                                                 :children {:type :string}}}}
+                          {:values [123]})))
+  (is (= [false {:field "smaller than 1"}]
+         (validate-schema false
+                          {:properties {:field {:type :number
+                                                :min 1}}}
+                          {:field 0})))
+  (is (= [false {:field "bigger than 1"}]
+         (validate-schema false
+                          {:properties {:field {:type :number
+                                                :max 1}}}
+                          {:field 2})))
+  (is (= [false {:field "shorter than 1"}]
+         (validate-schema false
+                          {:properties {:field {:type :string
+                                                :min-length 1}}}
+                          {:field ""})))
+  (is (= [false {:field "longer than 1"}]
+         (validate-schema false
+                          {:properties {:field {:type :string
+                                                :max-length 1}}}
+                          {:field "ab"})))
+  (is (= [false {:field "shorter than 1"}]
+         (validate-schema false
+                          {:properties {:field {:type :vector
+                                                :children {:type :number}
+                                                :min-length 1}}}
+                          {:field []})))
+  (is (= [false {:field "longer than 1"}]
+         (validate-schema false
+                          {:properties {:field {:type :vector
+                                                :children {:type :number}
+                                                :max-length 1}}}
+                          {:field [1 2]})))
+  (is (= [false {:field "does not match [0-9]+"}]
+         (validate-schema false
+                          {:properties {:field {:type :string
+                                                :regex #"[0-9]+"}}}
+                          {:field "abc"})))
+  (is (= [true {}]
+         (validate-schema false
+                          {:properties {:field {:type :string
+                                                :regex #"[0-9]+"}}}
+                          {:field "0123"}))))
