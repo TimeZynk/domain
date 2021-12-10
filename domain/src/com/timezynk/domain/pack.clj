@@ -229,6 +229,11 @@
       (double v)
       v)))
 
+(defmethod pack-property :integer [_ v props]
+  (if (string? v)
+    (edn/read-string v)
+    v))
+
 (defmethod pack-property :duration [_ v props]
   (if (string? v)
     (edn/read-string v)
