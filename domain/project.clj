@@ -11,7 +11,6 @@
                  [compojure "1.5.1" :scope "provided"]
                  [congomongo "2.1.0" :scope "provided"]
                  [org.clojure/clojure "1.10.1" :scope "provided"]
-                 [ch.qos.logback/logback-core "1.2.9"]
                  [ch.qos.logback/logback-classic "1.2.9"]
                  [org.clojure/tools.logging "1.2.3"]
                  [slingshot "0.12.2"]
@@ -20,7 +19,7 @@
   :test-paths ["src" "test"]
   :plugins [[lein-cljfmt "0.6.7"]]
   :profiles {:kaocha {:dependencies [[lambdaisland/kaocha "1.0.632"]]
-                      :jvm-opts ["-Djdk.tls.client.protocols=TLSv1,TLSv1.1,TLSv1.2"]}
-             :production {:jvm-opts ["-Dclojure.tools.logging.factory=clojure.tools.logging.impl/slf4j-factory"]}}
+                      :jvm-opts ["-Djdk.tls.client.protocols=TLSv1,TLSv1.1,TLSv1.2"]}}
 
+  :jvm-opts ["-Dclojure.tools.logging.factory=clojure.tools.logging.impl/slf4j-factory"]
   :aliases {"kaocha" ["with-profile" "+kaocha" "run" "-m" "kaocha.runner"]})
