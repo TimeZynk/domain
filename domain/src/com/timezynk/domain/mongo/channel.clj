@@ -48,3 +48,6 @@
   [topic collection-name f]
   (init-channel)
   (c/subscribe-broadcast topic collection-name (f-wrapper f)))
+
+(defn unsubscribe-all []
+  (c/unsubscribe-all))
