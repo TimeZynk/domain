@@ -274,6 +274,34 @@
                  (f dom-type-collection docs))]
     (with-meta v (meta docs))))
 
+(defn get-dtc-name [dtc]
+  (or (:ability-name dtc) (:name dtc)))
+
+(defn- property-authorization-predicate
+  "Builds a predicate which decides whether doc is missing individual
+   authorization to contain the incoming property."
+  [dtc doc action]
+  (fn [property-name]
+    (let [action (keyword (format "%s-property-%s"
+                                  (name action)
+                                  (name property-name)))
+          object (get-dtc-name dtc)]
+      (not (ability/can? action object doc)))))
+
+(defn- redactor
+  "Builds a station which redacts from doc those properties, which:
+    * have been marked for individual authorization
+    * fail the authorization test"
+  [action]
+  (fn [dtc doc]
+    (let [misses-auth? (property-authorization-predicate dtc doc action)
+          redact? (every-pred (comp :authorize-individually? val)
+                              (comp misses-auth? key))]
+      (->> (:properties dtc)
+           (filter redact?)
+           (map key)
+           (apply dissoc doc)))))
+
 (def deref-steps [collect-computed cleanup-internal])
 
 (def destroy! (partial assembly-line
@@ -289,6 +317,7 @@
                                       validate-id-availability]
                        :pre-process  [add-default-values (add-derived-values false)]
                        :execute      execute-insert!
+                       :redact       (redactor :create)
                        :deref        deref-steps]
                       :wrapper-f wrapper-f
                       :environment))
@@ -300,12 +329,14 @@
                                       validate-doc!]
                        :pre-process  (add-derived-values true)
                        :execute      execute-update!
+                       :redact       (redactor :update)
                        :deref        deref-steps]
                       :wrapper-f wrapper-f
                       :environment))
 
 (def fetch (partial assembly-line
                     [:execute execute-fetch
+                     :redact  (redactor :read)
                      :deref   deref-steps]
                     :wrapper-f wrapper-f
                     :environment))
@@ -337,7 +368,7 @@
                                         ; HTTP routes
 
 
-(defn- add-stations* [line stations]
+(defn add-stations* [line stations]
   (if (sequential? stations)
     (let [add-s (->> stations
                      (partition 3)
@@ -377,9 +408,6 @@
 
 (defn dom-response [doc req restriction collects]
   (etag-response req doc))
-
-(defn get-dtc-name [dtc]
-  (or (:ability-name dtc) (:name dtc)))
 
 (def ^:dynamic *request* nil)
 
