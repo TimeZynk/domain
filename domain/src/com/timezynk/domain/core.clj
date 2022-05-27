@@ -368,7 +368,7 @@
                                         ; HTTP routes
 
 
-(defn add-stations* [line stations]
+(defn- add-stations* [line stations]
   (if (sequential? stations)
     (let [add-s (->> stations
                      (partition 3)
