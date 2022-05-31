@@ -277,26 +277,15 @@
 (defn get-dtc-name [dtc]
   (or (:ability-name dtc) (:name dtc)))
 
-(defn- property-authorization-predicate
-  "Builds a predicate which decides whether doc is missing individual
-   authorization to contain the incoming property."
-  [dtc doc action]
-  (fn [property-name]
-    (let [action (keyword (format "%s-property-%s"
-                                  (name action)
-                                  (name property-name)))
-          object (get-dtc-name dtc)]
-      (not (ability/can? action object doc)))))
-
-(defn- redactor
+(defn- mask
   "Builds a station which redacts from doc those properties, which:
-    * have been marked for individual authorization
-    * fail the authorization test"
+    * have been marked for masking
+    * pass the mask test"
   [action]
   (fn [dtc doc]
-    (let [misses-auth? (property-authorization-predicate dtc doc action)
-          redact? (every-pred (comp :authorize-individually? val)
-                              (comp misses-auth? key))]
+    (let [redact? (fn [[property-name {:keys [mask]}]]
+                    (and (fn? mask)
+                         (mask dtc doc action property-name)))]
       (->> (:properties dtc)
            (filter redact?)
            (map key)
@@ -316,7 +305,7 @@
                                       validate-doc!
                                       validate-id-availability]
                        :pre-process  [add-default-values (add-derived-values false)]
-                       :redact       (redactor :create)
+                       :mask         (mask :create)
                        :execute      execute-insert!
                        :deref        deref-steps]
                       :wrapper-f wrapper-f
@@ -328,7 +317,7 @@
                                       validate-properties2!
                                       validate-doc!]
                        :pre-process  (add-derived-values true)
-                       :redact       (redactor :update)
+                       :mask         (mask :update)
                        :execute      execute-update!
                        :deref        deref-steps]
                       :wrapper-f wrapper-f
@@ -336,7 +325,7 @@
 
 (def fetch (partial assembly-line
                     [:execute execute-fetch
-                     :redact  (redactor :read)
+                     :mask    (mask :read)
                      :deref   deref-steps]
                     :wrapper-f wrapper-f
                     :environment))

@@ -1,9 +1,8 @@
-(ns com.timezynk.domain.redaction-test
-  "Elevation of authorization barrier on a per-property basis"
+(ns com.timezynk.domain.dtc.masks-test
   (:require [clojure.test :refer [deftest is testing compose-fixtures use-fixtures]]
-[clojure.tools.logging :as log]
             [spy.core :refer [stub spy called-once? call-matching?]]
             [com.timezynk.domain.core :as c]
+            [com.timezynk.domain.dtc.masks :refer [authorization]]
             [com.timezynk.domain.schema :as s]
             [com.timezynk.domain.mongo.core :as m]
             [com.timezynk.useful.cancan :as ability]
@@ -15,7 +14,7 @@
 
 (def ^:const dtc-properties
   {:x (s/string)
-   :y (s/string :authorize-individually? true)
+   :y (s/string :mask authorization)
    :z (s/string)})
 
 (def ^:const records
@@ -51,7 +50,7 @@
         (testing "object"
           (is (call-matching? ability/can? (comp #{:qwerty} second))))))))
 
-(comment (deftest creating
+(deftest creating
   (testing "Adding to the store"
     @(p/conj! *dtc* {:x "cba" :y "321" :z "zyx" :company-id (ObjectId.)})
     (testing "marked property"
@@ -61,9 +60,9 @@
     (testing "unmarked property"
       (is (call-matching? m/insert! (fn [[_ new-doc]]
                                       (let [new-doc (peek (into [] new-doc))]
-                                        (contains? new-doc :z)))))))))
+                                        (contains? new-doc :z))))))))
 
-(comment (deftest updating
+(deftest updating
   (testing "Updating the store"
     @(p/update-in! *dtc* {} {:y "321" :z "zyx"})
     (testing "marked property"
@@ -71,4 +70,4 @@
                                       (not (contains? new-doc :y))))))
     (testing "unmarked property"
       (is (call-matching? m/update! (fn [[_ _ new-doc]]
-                                      (contains? new-doc :z))))))))
+                                      (contains? new-doc :z)))))))
