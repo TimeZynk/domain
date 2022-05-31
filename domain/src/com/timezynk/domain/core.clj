@@ -316,8 +316,8 @@
                                       validate-doc!
                                       validate-id-availability]
                        :pre-process  [add-default-values (add-derived-values false)]
-                       :execute      execute-insert!
                        :redact       (redactor :create)
+                       :execute      execute-insert!
                        :deref        deref-steps]
                       :wrapper-f wrapper-f
                       :environment))
@@ -328,8 +328,8 @@
                                       validate-properties2!
                                       validate-doc!]
                        :pre-process  (add-derived-values true)
-                       :execute      execute-update!
                        :redact       (redactor :update)
+                       :execute      execute-update!
                        :deref        deref-steps]
                       :wrapper-f wrapper-f
                       :environment))

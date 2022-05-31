@@ -61,7 +61,7 @@
          {:valid-from (System/currentTimeMillis)
           :valid-to   nil}))
 
-(defn- insert! [cname new]
+(defn insert! [cname new]
   (mongo/with-mongo @db
     (let [new (->> new
                    (r/map rename-ids-in)
@@ -97,7 +97,7 @@
       (mchan/put! :update cname newlings oldies)
       newlings)))
 
-(defn- update! [cname restriction new-doc]
+(defn update! [cname restriction new-doc]
   (mongo/with-mongo @db
     (let [now         (System/currentTimeMillis)
           restriction (postwalk-replace ids-in restriction)
