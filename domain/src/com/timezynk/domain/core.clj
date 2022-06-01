@@ -274,9 +274,6 @@
                  (f dom-type-collection docs))]
     (with-meta v (meta docs))))
 
-(defn get-dtc-name [dtc]
-  (or (:ability-name dtc) (:name dtc)))
-
 (defn- mask
   "Builds a station which redacts from doc those properties, which:
     * have been marked for masking
@@ -397,6 +394,9 @@
 
 (defn dom-response [doc req restriction collects]
   (etag-response req doc))
+
+(defn get-dtc-name [dtc]
+  (or (:ability-name dtc) (:name dtc)))
 
 (def ^:dynamic *request* nil)
 
