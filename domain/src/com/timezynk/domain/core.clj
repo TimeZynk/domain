@@ -274,6 +274,20 @@
                  (f dom-type-collection docs))]
     (with-meta v (meta docs))))
 
+(defn- mask
+  "Builds a station which redacts from doc those properties, which:
+    * have been marked for masking
+    * pass the mask test"
+  [action]
+  (fn [dtc doc]
+    (let [redact? (fn [[property-name {:keys [mask]}]]
+                    (and (fn? mask)
+                         (mask dtc doc action property-name)))]
+      (->> (:properties dtc)
+           (filter redact?)
+           (map key)
+           (apply dissoc doc)))))
+
 (def deref-steps [collect-computed cleanup-internal])
 
 (def destroy! (partial assembly-line
@@ -288,6 +302,7 @@
                                       validate-doc!
                                       validate-id-availability]
                        :pre-process  [add-default-values (add-derived-values false)]
+                       :mask         (mask :create)
                        :execute      execute-insert!
                        :deref        deref-steps]
                       :wrapper-f wrapper-f
@@ -299,6 +314,7 @@
                                       validate-properties2!
                                       validate-doc!]
                        :pre-process  (add-derived-values true)
+                       :mask         (mask :update)
                        :execute      execute-update!
                        :deref        deref-steps]
                       :wrapper-f wrapper-f
@@ -306,6 +322,7 @@
 
 (def fetch (partial assembly-line
                     [:execute execute-fetch
+                     :mask    (mask :read)
                      :deref   deref-steps]
                     :wrapper-f wrapper-f
                     :environment))
