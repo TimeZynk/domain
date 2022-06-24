@@ -2,7 +2,7 @@
   (:require [clojure.test :refer [deftest is testing compose-fixtures use-fixtures]]
             [spy.core :refer [stub spy called-once? call-matching?]]
             [com.timezynk.domain.core :as c]
-            [com.timezynk.domain.dtc.masks :refer [authorization]]
+            [com.timezynk.domain.dtc.masks :refer [unauthorized?]]
             [com.timezynk.domain.schema :as s]
             [com.timezynk.domain.mongo.core :as m]
             [com.timezynk.useful.cancan :as ability]
@@ -14,7 +14,7 @@
 
 (def ^:const dtc-properties
   {:x (s/string)
-   :y (s/string :mask authorization)
+   :y (s/string :mask unauthorized?)
    :z (s/string)})
 
 (def ^:const records
@@ -26,8 +26,9 @@
     (f)))
 
 (defn- with-authorization-failure [f]
-  (with-redefs [ability/can? (stub false)]
-    (f)))
+  (binding [ability/*ability* {}]
+    (with-redefs [ability/can? (stub false)]
+      (f))))
 
 (use-fixtures :each (->> create-dtc
                          (compose-fixtures (u/build-immutable-inmemory-store records))
