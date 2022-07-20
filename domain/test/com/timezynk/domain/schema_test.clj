@@ -1,14 +1,10 @@
 (ns com.timezynk.domain.schema-test
   (:require [clojure.test :refer [deftest is testing use-fixtures]]
-            [spy.core :refer [stub spy called-once? call-matching?]]
-            [com.timezynk.useful.mongo :as um]
             [com.timezynk.domain.core :as c]
             [com.timezynk.domain.schema :as s]
-            [com.timezynk.domain.persistence :as p]
-            [com.timezynk.domain.utils :as u])
+            [com.timezynk.domain.persistence :as p])
   (:use [slingshot.test])
-  (:import [org.bson.types ObjectId]
-           [clojure.lang ExceptionInfo]))
+  (:import [org.bson.types ObjectId]))
 
 (def ^:dynamic *dtc*)
 
