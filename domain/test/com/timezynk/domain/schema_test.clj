@@ -1,67 +1,44 @@
 (ns com.timezynk.domain.schema-test
-  (:require [clojure.test :refer [deftest is testing use-fixtures]]
-            [com.timezynk.domain.core :as c]
+  (:require [clojure.test :refer [deftest is are testing]]
             [com.timezynk.domain.schema :as s]
-            [com.timezynk.domain.persistence :as p])
-  (:use [slingshot.test])
+            [com.timezynk.domain.validation.validate :refer [validate-schema]])
   (:import [org.bson.types ObjectId]))
 
-(def ^:dynamic *dtc*)
+(def ^:const valid-value
+  {:id (ObjectId.)
+   :ref-no 42
+   :sold true})
 
-(def ^:const properties
-  {:x (s/id)
-   :y (s/map {:id (s/id)
-              :ref-no (s/integer)
-              :sold (s/boolean)})})
-
-(defn- create-dtc [f]
-  (binding [*dtc* (c/dom-type-collection :name :cars
-                                         :properties properties)]
-    (f)))
-
-(def ^:const valid-doc
-  {:x (ObjectId.)
-   :y {:id (ObjectId.)
-       :ref-no 42
-       :sold true}
-   :company-id (ObjectId.)})
-
-(use-fixtures :each create-dtc)
-
-(defn- insert! [doc]
-  @(p/conj! *dtc* doc))
+(defn- validator [value]
+  (validate-schema false
+                   {:properties {:field (s/map {:id (s/id)
+                                                :ref-no (s/integer)
+                                                :sold (s/boolean)})}}
+                   {:field value}))
 
 (deftest valid
-  (let [before @(p/select-count *dtc*)
-        _ (insert! valid-doc)
-        after @(p/select-count *dtc*)]
-    (is (= after (inc before)))))
+  (is (= [true {}]
+         (validator valid-value))))
 
 (deftest map-value-not-matching-key-type
   (testing "type mismatch within map"
-    (let [invalid-doc-1 (update-in valid-doc [:y :id] str)
-          invalid-doc-2 (update-in valid-doc [:y :ref-no] str)
-          invalid-doc-3 (assoc-in valid-doc [:y :sold] 1)]
+    (let [invalid-value-1 (update valid-value :id str)
+          invalid-value-2 (update valid-value :ref-no str)
+          invalid-value-3 (assoc valid-value :sold 1)]
       (testing "string instead of ObjectId"
-        (is (thrown+? (= (get-in % [:errors :id]) "not a valid id")
-                      (insert! invalid-doc-1))))
+        (is (= [false {:id "not a valid id"}]
+               (validator invalid-value-1))))
       (testing "string instead of integer"
-        (is (thrown+? (= (get-in % [:errors :ref-no]) "not an integer")
-                      (insert! invalid-doc-2))))
+        (is (= [false {:ref-no "not an integer"}]
+               (validator invalid-value-2))))
       (testing "integer instead of boolean"
-        (is (thrown+? (= (get-in % [:errors :sold]) "not a boolean")
-                      (insert! invalid-doc-3)))))))
+        (is (= [false {:sold "not a boolean"}]
+               (validator invalid-value-3)))))))
 
 (deftest non-map-instead-of-map
-  (let [invalid-doc-1 (assoc valid-doc :y "abc")
-        invalid-doc-2 (assoc valid-doc :y 42)
-        invalid-doc-3 (assoc valid-doc :y false)]
-    (testing "string instead of map"
-      (is (thrown+? (= (get-in % [:errors :y]) "not a map")
-                    (insert! invalid-doc-1))))
-    (testing "integer instead of map"
-      (is (thrown+? (= (get-in % [:errors :y]) "not a map")
-                    (insert! invalid-doc-2))))
-    (testing "boolean instead of map"
-      (is (thrown+? (= (get-in % [:errors :y]) "not a map")
-                    (insert! invalid-doc-3))))))
+  (are [value] (let [[ok? errors] (validator value)]
+                 (and (false? ok?)
+                      (= "not a map" (:field errors))))
+       "abc"
+       123
+       false))
