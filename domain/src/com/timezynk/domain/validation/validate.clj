@@ -8,19 +8,32 @@
    [com.timezynk.domain.validation.validate-type :refer [validate-type]]
    [spy.core :as spy]))
 
+(declare validate-property)
+
 (declare validate-schema)
+
+(defn- vector-validation-reducer
+  "Builds a reducer for validating vector input against the given rule.
+   Expects vector items to be [index value] pairs.
+   Returns a [valid? errors] pair."
+  [all-optional? rule]
+  (fn [acc x]
+    (let [[valid? errors] acc
+          [index item-value] x
+          [item-valid? item-errors] (validate-property [index rule]
+                                                       all-optional?
+                                                       {index item-value})]
+      [(and valid? item-valid?)
+       (merge errors item-errors)])))
 
 (defn- validate-vector [all-optional? attr-name rule vector-value]
   (if (sequential? vector-value)
-    (let [[valid? errors] (r/reduce
-                           (fn [acc v]
-                             (let [[v? e] (validate-schema all-optional? rule v)]
-                               [(and (first acc) v?)
-                                (merge (second acc) e)]))
-                           [true {}]
-                           vector-value)]
+    (let [reducer (vector-validation-reducer all-optional? rule)
+          [valid? errors] (->> vector-value
+                               (map vector (range))
+                               (r/reduce reducer [true {}]))]
       [valid? {attr-name errors}])
-    [false {attr-name {:vector "not sequential"}}]))
+    [false {attr-name "not sequential"}]))
 
 (def ^:private check-by-length?
   (some-fn string? vector? map?))

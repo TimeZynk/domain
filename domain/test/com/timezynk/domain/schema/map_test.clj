@@ -1,4 +1,4 @@
-(ns com.timezynk.domain.schema-test
+(ns com.timezynk.domain.schema.map-test
   (:require [clojure.test :refer [deftest is are testing]]
             [com.timezynk.domain.schema :as s]
             [com.timezynk.domain.validation.validate :refer [validate-schema]])
