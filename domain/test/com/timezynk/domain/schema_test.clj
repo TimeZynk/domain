@@ -38,13 +38,30 @@
     (is (= after (inc before)))))
 
 (deftest map-value-not-matching-key-type
-  (testing "Type mismatch within map"
+  (testing "type mismatch within map"
     (let [invalid-doc-1 (update-in valid-doc [:y :id] str)
           invalid-doc-2 (update-in valid-doc [:y :ref-no] str)
           invalid-doc-3 (assoc-in valid-doc [:y :sold] 1)]
       (testing "string instead of ObjectId"
-        (is (thrown+? [:errors {:id "not a valid id"}] (insert! invalid-doc-1))))
+        (is (thrown+? (= (get-in % [:errors :id]) "not a valid id")
+                      (insert! invalid-doc-1))))
       (testing "string instead of integer"
-        (is (thrown+? [:errors {:ref-no "not an integer"}] (insert! invalid-doc-2))))
+        (is (thrown+? (= (get-in % [:errors :ref-no]) "not an integer")
+                      (insert! invalid-doc-2))))
       (testing "integer instead of boolean"
-        (is (thrown+? [:errors {:sold "not a boolean"}] (insert! invalid-doc-3)))))))
+        (is (thrown+? (= (get-in % [:errors :sold]) "not a boolean")
+                      (insert! invalid-doc-3)))))))
+
+(deftest non-map-instead-of-map
+  (let [invalid-doc-1 (assoc valid-doc :y "abc")
+        invalid-doc-2 (assoc valid-doc :y 42)
+        invalid-doc-3 (assoc valid-doc :y false)]
+    (testing "string instead of map"
+      (is (thrown+? (= (get-in % [:errors :y]) "not a map")
+                    (insert! invalid-doc-1))))
+    (testing "integer instead of map"
+      (is (thrown+? (= (get-in % [:errors :y]) "not a map")
+                    (insert! invalid-doc-2))))
+    (testing "boolean instead of map"
+      (is (thrown+? (= (get-in % [:errors :y]) "not a map")
+                    (insert! invalid-doc-3))))))

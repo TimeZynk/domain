@@ -249,12 +249,12 @@
                           {:properties {:values {:type :map
                                                  :properties {:field2 {:type :string}}}}}
                           {:values {:field2 "123"}})))
-  (is (thrown?
-       java.lang.ClassCastException
-       (validate-schema false
-                        {:properties {:values {:type :map
-                                               :properties {:field2 {:type :string}}}}}
-                        {:values "123"})))
+  (let [result (validate-schema false
+                                {:properties {:values {:type :map
+                                                       :properties {:field2 {:type :string}}}}}
+                                {:values "123"})]
+    (is (= false (first result)))
+    (is (= "not a map" (get-in result [1 :values]))))
   (is (= [true {}]
          (validate-schema false
                           {:properties {:values {:type :vector
