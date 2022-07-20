@@ -22,6 +22,9 @@
       [valid? {attr-name errors}])
     [false {attr-name {:vector "not sequential"}}]))
 
+(def ^:private check-by-length?
+  (some-fn string? vector? map?))
+
 (defn- get-check-fn [all-optional? k property-name property-definition]
   (case k
     :min        (check #(<= property-definition %)
@@ -30,10 +33,12 @@
     :max        (check #(>= property-definition %)
                        property-name
                        (str "bigger than " property-definition))
-    :min-length (check #(<= property-definition (count %))
+    :min-length (check #(and (check-by-length? %)
+                             (<= property-definition (count %)))
                        property-name
                        (str "shorter than " property-definition))
-    :max-length (check #(>= property-definition (count %))
+    :max-length (check #(and (check-by-length? %)
+                             (>= property-definition (count %)))
                        property-name
                        (str "longer than " property-definition))
     :type       (validate-type property-name property-definition)
