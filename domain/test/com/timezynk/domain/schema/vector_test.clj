@@ -1,40 +1,61 @@
 (ns com.timezynk.domain.schema.vector-test
-  (:require [clojure.test :refer [deftest is are testing]]
-            [com.timezynk.domain.schema :as s]
-            [com.timezynk.domain.validation.validate :refer [validate-schema]])
+  (:require [clojure.test :refer [deftest is testing use-fixtures]]
+            [com.timezynk.assembly-line :as a]
+            [com.timezynk.domain.core :as c]
+            [com.timezynk.domain.persistence :as p]
+            [com.timezynk.domain.schema :as s])
+  (:use [slingshot.test])
   (:import [org.bson.types ObjectId]))
 
-(def ^:const valid-value
-  [1 2 3])
+(def ^:private ^:dynamic *dtc*)
 
-(defn- validator [value]
-  (validate-schema false
-                   {:properties {:field (s/vector (s/integer))}}
-                   {:field value}))
+(def ^:private ^:const properties
+  {:x (s/vector (s/integer))})
+
+(defn- create-dtc [f]
+  (binding [*dtc* (c/dom-type-collection :name :qwerty
+                                         :properties properties)]
+    (f)))
+
+(def ^:private ^:const valid-doc
+  {:x [1 2 3]
+   :company-id (ObjectId.)})
+
+(defn- insert! [doc]
+  (-> (p/conj! *dtc* doc)
+      (a/add-stations :replace :execute [:nop (fn [_ doc] doc)])
+      deref))
+
+(use-fixtures :each create-dtc)
 
 (deftest valid
-  (is (= [true {}]
-         (validator valid-value))))
+  (is (insert! valid-doc)))
 
 (deftest vector-value-not-matching-item-type
   (testing "type mismatch within vector"
-    (let [invalid-value-1 (update valid-value 0 str)
-          invalid-value-2 (update valid-value 1 boolean)
-          invalid-value-3 (update valid-value 2 #(hash-map :x %))]
+    (let [invalid-doc-1 (update-in valid-doc [:x 0] str)
+          invalid-doc-2 (update-in valid-doc [:x 1] boolean)
+          invalid-doc-3 (update-in valid-doc [:x 2] #(hash-map :x %))]
       (testing "string instead of integer"
-        (is (= [false {:field {0 "not an integer"}}]
-               (validator invalid-value-1))))
+        (is (thrown+? (= (get-in % [:errors :x 0]) "not an integer")
+                      (insert! invalid-doc-1))))
       (testing "boolean instead of integer"
-        (is (= [false {:field {1 "not an integer"}}]
-               (validator invalid-value-2))))
+        (is (thrown+? (= (get-in % [:errors :x 1]) "not an integer")
+                      (insert! invalid-doc-2))))
       (testing "map instead of integer"
-        (is (= [false {:field {2 "not an integer"}}]
-               (validator invalid-value-3)))))))
+        (is (thrown+? (= (get-in % [:errors :x 2]) "not an integer")
+                      (insert! invalid-doc-3)))))))
 
 (deftest non-vector-instead-of-vector
-  (are [value] (let [[ok? errors] (validator value)]
-                 (and (false? ok?)
-                      (= "not sequential" (:field errors))))
-       "abc"
-       123
-       false))
+  (let [invalid-doc-1 (assoc valid-doc :x "abc")
+        invalid-doc-2 (assoc valid-doc :x 123)
+        invalid-doc-3 (assoc valid-doc :x false)]
+    (testing "string instead of map"
+      (is (thrown+? (= (get-in % [:errors :x]) "not sequential")
+                    (insert! invalid-doc-1))))
+    (testing "integer instead of map"
+      (is (thrown+? (= (get-in % [:errors :x]) "not sequential")
+                    (insert! invalid-doc-2))))
+    (testing "boolean instead of map"
+      (is (thrown+? (= (get-in % [:errors :x]) "not sequential")
+                    (insert! invalid-doc-3))))))
