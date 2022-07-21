@@ -112,9 +112,9 @@
 
 (deftest test-validate-vector
   (is (= [true {:field {}}]
-         (validate-vector false :field :string ["123"])))
-  (is (= [true {:field {}}]
-         (validate-vector false :field :number ["123"])))
+         (validate-vector false :field {:type :string} ["123"])))
+  (is (= [false {:field {0 "not a number"}}]
+         (validate-vector false :field {:type :number} ["123"])))
   (is (= [true {:field {}}]
          (validate-vector false
                           :field
@@ -136,7 +136,7 @@
                           :field
                           {:properties {:field1 {:type :string}}}
                           [{:field2 "123"}])))
-  (is (= [false {:field {:vector "not sequential"}}]
+  (is (= [false {:field "not sequential"}]
          (validate-vector false :field :string "123"))))
 
 (deftest test-get-check-fn
@@ -257,7 +257,7 @@
                           {:properties {:values {:type :vector
                                                  :children {:type :string}}}}
                           {:values ["123"]})))
-  (is (= [false {:values {:vector "not sequential"}}]
+  (is (= [false {:values "not sequential"}]
          (validate-schema false
                           {:properties {:values {:type :vector
                                                  :children {:type :string}}}}
@@ -273,7 +273,7 @@
                                 {:values "123"})]
     (is (= false (first result)))
     (is (= "not a map" (get-in result [1 :values]))))
-  (is (= [true {}]
+  (is (= [false {:values {0 "not a string"}}]
          (validate-schema false
                           {:properties {:values {:type :vector
                                                  :children {:type :string}}}}
