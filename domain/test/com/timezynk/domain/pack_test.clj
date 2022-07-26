@@ -78,3 +78,10 @@
                      :route-params {:company-id (um/object-id "5f08667cfc3107569d6deb79")}}
             result (p/pack-query dtc request)]
         (is (-> result :some :path.to :id (um/object-id?)))))))
+
+(deftest pack-doc-test
+  (testing "Should pack malformed ObjectId values"
+    (let [packed (p/pack-doc coll {:message "hi"
+                                   :related-id "not-an-objectid"
+                                   :grade 10})]
+      (is (= "not-an-objectid" (:related-id packed))))))

@@ -195,8 +195,8 @@
       (.toString v))))
 
 (defmethod pack-property :object-id [_ v props]
-  (when (object-id? v)
-    (um/object-id v)))
+  (cond-> v
+    (object-id? v) (um/object-id)))
 
 (defmethod pack-property :date [trail v props]
   (try
