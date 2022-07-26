@@ -46,12 +46,14 @@
     :max        (check #(>= property-definition %)
                        property-name
                        (str "bigger than " property-definition))
-    :min-length (check #(and (check-by-length? %)
-                             (<= property-definition (count %)))
+    :min-length (check #(if (check-by-length? %)
+                          (<= property-definition (count %))
+                          true)
                        property-name
                        (str "shorter than " property-definition))
-    :max-length (check #(and (check-by-length? %)
-                             (>= property-definition (count %)))
+    :max-length (check #(if (check-by-length? %)
+                          (>= property-definition (count %))
+                          true)
                        property-name
                        (str "longer than " property-definition))
     :type       (validate-type property-name property-definition)
@@ -310,6 +312,16 @@
                                                 :children {:type :number}
                                                 :max-length 1}}}
                           {:field [1 2]})))
+  (is (= [true {}]
+         (validate-schema false
+                          {:properties {:field {:type :integer
+                                                :min-length 3}}}
+                          {:field 12})))
+  (is (= [true {}]
+         (validate-schema false
+                          {:properties {:field {:type :integer
+                                                :max-length 3}}}
+                          {:field 1234})))
   (is (= [false {:field "does not match [0-9]+"}]
          (validate-schema false
                           {:properties {:field {:type :string
