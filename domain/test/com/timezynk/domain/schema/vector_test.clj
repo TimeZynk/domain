@@ -51,11 +51,11 @@
         invalid-doc-2 (assoc valid-doc :x 123)
         invalid-doc-3 (assoc valid-doc :x false)]
     (testing "string instead of map"
-      (is (thrown+? (= (get-in % [:errors :x]) "not sequential")
+      (is (thrown+? (= (get-in % [:errors :x]) {:vector "not sequential"})
                     (insert! invalid-doc-1))))
     (testing "integer instead of map"
-      (is (thrown+? (= (get-in % [:errors :x]) "not sequential")
+      (is (thrown+? (= (get-in % [:errors :x]) {:vector "not sequential"})
                     (insert! invalid-doc-2))))
     (testing "boolean instead of map"
-      (is (thrown+? (= (get-in % [:errors :x]) "not sequential")
+      (is (thrown+? (= (get-in % [:errors :x]) {:vector "not sequential"})
                     (insert! invalid-doc-3))))))

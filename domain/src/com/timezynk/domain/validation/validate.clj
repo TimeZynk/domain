@@ -33,7 +33,7 @@
                                (map vector (range))
                                (r/reduce reducer [true {}]))]
       [valid? {attr-name errors}])
-    [false {attr-name "not sequential"}]))
+    [false {attr-name {:vector "not sequential"}}]))
 
 (def ^:private check-by-length?
   (some-fn string? vector? map?))
@@ -138,7 +138,7 @@
                           :field
                           {:properties {:field1 {:type :string}}}
                           [{:field2 "123"}])))
-  (is (= [false {:field "not sequential"}]
+  (is (= [false {:field {:vector "not sequential"}}]
          (validate-vector false :field :string "123"))))
 
 (deftest test-get-check-fn
@@ -259,7 +259,7 @@
                           {:properties {:values {:type :vector
                                                  :children {:type :string}}}}
                           {:values ["123"]})))
-  (is (= [false {:values "not sequential"}]
+  (is (= [false {:values {:vector "not sequential"}}]
          (validate-schema false
                           {:properties {:values {:type :vector
                                                  :children {:type :string}}}}
