@@ -26,7 +26,7 @@
     (f)))
 
 (defn- with-authorization-failure [f]
-  (binding [ability/*ability* {}]
+  (ability/with-ability
     (with-redefs [ability/can? (stub false)]
       (f))))
 
