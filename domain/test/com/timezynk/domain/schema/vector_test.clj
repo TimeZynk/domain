@@ -3,8 +3,8 @@
             [com.timezynk.assembly-line :as a]
             [com.timezynk.domain.core :as c]
             [com.timezynk.domain.persistence :as p]
-            [com.timezynk.domain.schema :as s])
-  (:use [slingshot.test])
+            [com.timezynk.domain.schema :as s]
+            [slingshot.test])
   (:import [org.bson.types ObjectId]))
 
 (def ^:private ^:dynamic *dtc*)
