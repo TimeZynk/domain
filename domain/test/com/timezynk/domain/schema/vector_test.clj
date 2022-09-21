@@ -9,12 +9,9 @@
 
 (def ^:private ^:dynamic *dtc*)
 
-(def ^:private ^:const properties
-  {:x (s/vector (s/integer))})
-
 (defn- create-dtc [f]
   (binding [*dtc* (c/dom-type-collection :name :qwerty
-                                         :properties properties)]
+                                         :properties {:x (s/vector (s/integer))})]
     (f)))
 
 (def ^:private ^:const valid-doc
