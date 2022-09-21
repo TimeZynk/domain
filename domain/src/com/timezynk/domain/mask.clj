@@ -1,4 +1,22 @@
 (ns com.timezynk.domain.mask
+  "Implementation of DTC property masks.
+
+   A property is redacted from the document if the following conditions are met:
+    * property has been annotated with a :mask f attribute
+    * f is a function
+    * (f dtc doc action property-name) is truthy at the time of deferral
+
+   Example:
+   (defn mf
+     \"Property :y is read-only, disable writing!\"
+     [dtc doc action property-name]
+     (not= :read action))
+
+   (def dtc
+     (dom-type-collection :name :qwerty
+                          :properties {:x (s/string)
+                                       :y (s/string :mask mf)
+                                       :z (s/string)}))"
   (:require [clojure.string :as string]))
 
 (defn- recurse?
