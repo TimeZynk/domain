@@ -1,8 +1,8 @@
-(ns com.timezynk.domain.dtc.masks-test
+(ns com.timezynk.domain.mask.built-in-test
   (:require [clojure.test :refer [deftest is testing compose-fixtures use-fixtures]]
             [spy.core :refer [stub spy called-n-times? call-matching?]]
             [com.timezynk.domain.core :as c]
-            [com.timezynk.domain.dtc.masks :refer [unauthorized?]]
+            [com.timezynk.domain.mask.built-in :refer [unauthorized?]]
             [com.timezynk.domain.schema :as s]
             [com.timezynk.domain.mongo.core :as m]
             [com.timezynk.useful.cancan :as ability]
