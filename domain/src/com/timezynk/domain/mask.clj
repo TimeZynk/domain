@@ -39,18 +39,19 @@
   "Redacts all properties from doc for which redact? is true.
    Recurses for :map properties."
   [redact? dtc doc trail]
-  (reduce (fn [acc property]
-            (let [property-name (key property)
-                  trail (conj trail property-name)]
-              (cond-> acc
-                (redact? trail) (dissoc property-name)
-                (recurse? property)    (assoc property-name
-                                              (mask* redact?
-                                                     (val property)
-                                                     (get acc property-name)
-                                                     trail)))))
-             doc
-             (:properties dtc)))
+  (->> (:properties dtc)
+       (filter (comp (set (keys doc)) key))
+       (reduce (fn [acc property]
+                 (let [property-name (key property)
+                       trail (conj trail property-name)]
+                   (cond-> acc
+                     (redact? trail) (dissoc property-name)
+                     (recurse? property) (assoc property-name
+                                                (mask* redact?
+                                                       (val property)
+                                                       (get acc property-name)
+                                                       trail)))))
+               doc)))
 
 (defn build-station
   "Builds a station which redacts from doc those properties, which:
