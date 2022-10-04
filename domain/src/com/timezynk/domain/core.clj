@@ -300,8 +300,8 @@
                                       (partial validate-properties! true)
                                       validate-properties2!
                                       validate-doc!]
-                       :pre-process  (add-derived-values true)
                        :mask         (mask/build-station :update)
+                       :pre-process  (add-derived-values true)
                        :execute      execute-update!
                        :deref        deref-steps]
                       :wrapper-f wrapper-f

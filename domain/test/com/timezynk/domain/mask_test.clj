@@ -9,7 +9,7 @@
             [com.timezynk.domain.utils :as u])
   (:import [org.bson.types ObjectId]))
 
-(deftest fetch
+(deftest fetching
   (let [f (spy/stub true)
         dtc (dom-type-collection :name :qwerty
                                  :properties {:x (s/string :mask f)
@@ -28,7 +28,7 @@
       (testing "property-name"
         (is (spy/call-matching? f (mu/property-name-matcher "x")))))))
 
-(deftest fetch-nested
+(deftest fetching-nested
   (let [f (spy/stub true)
         dtc (dom-type-collection :name :qwerty
                                  :properties {:x (s/map {:z (s/string :mask f)})
@@ -42,7 +42,7 @@
     (testing "masking function property-name"
       (is (spy/call-matching? f (mu/property-name-matcher "x.z"))))))
 
-(deftest create
+(deftest creating
   (let [f (spy/stub true)
         dtc (dom-type-collection :name :qwerty
                                  :properties {:x (s/string :mask f)
@@ -62,7 +62,7 @@
       (testing "property-name"
         (is (spy/call-matching? f (mu/property-name-matcher "x")))))))
 
-(deftest create-with-default
+(deftest creating-with-default
   (let [f (spy/stub true)
         dtc (dom-type-collection :name :qwerty
                                  :properties {:x (s/string :mask f
@@ -72,3 +72,47 @@
                                                       (into [] docs)))]
                      (p/->1 dtc (p/conj! original-doc)))]
     (is (= "!" (:x result-doc)))))
+
+(deftest updating
+  (with-redefs [m/fetch (spy/stub [])
+                m/update! (spy/spy (fn [_ _ doc] doc))]
+    (let [f (spy/stub true)
+          dtc (dom-type-collection :name :qwerty
+                                   :properties {:x (s/string :mask f)
+                                                :y (s/string)})
+          doc {:x "123" :y "abc" :company-id (ObjectId.)}]
+      @(p/update-in! dtc {} doc)
+      (testing "property presence"
+        (is (spy/call-matching? m/update!
+                                (fn [[_ _ doc]]
+                                  (not (contains? doc :x)))))
+        (is (spy/call-matching? m/update!
+                                (fn [[_ _ doc]]
+                                  (contains? doc :y)))))
+      (testing "masking function"
+        (testing "calls"
+          (is (spy/called-once? f)))
+        (testing "action"
+          (is (spy/call-matching? f (mu/action-matcher :update))))
+        (testing "property-name"
+          (is (spy/call-matching? f (mu/property-name-matcher "x"))))))))
+
+(deftest updating-with-derived
+  (with-redefs [m/fetch (spy/stub [])
+                m/update! (spy/spy (fn [_ _ doc] doc))]
+    (let [f (spy/stub true)
+          dfn (fn [{:keys [x]} _]
+                (cond-> x
+                  x inc))
+          dtc (dom-type-collection :name :qwerty
+                                   :properties {:x (s/integer :mask f)
+                                                :y (s/integer :derived dfn)})
+          doc {:x 10 :company-id (ObjectId.)}]
+      @(p/update-in! dtc {} doc)
+      (testing "property presence"
+        (is (spy/call-matching? m/update!
+                                (fn [[_ _ doc]]
+                                  (not (contains? doc :x)))))
+        (is (spy/call-matching? m/update!
+                                (fn [[_ _ doc]]
+                                  (not (contains? doc :y)))))))))
