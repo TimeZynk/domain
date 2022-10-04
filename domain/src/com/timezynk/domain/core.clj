@@ -288,8 +288,8 @@
                                       validate-properties2!
                                       validate-doc!
                                       validate-id-availability]
-                       :pre-process  [add-default-values (add-derived-values false)]
                        :mask         (mask/build-station :create)
+                       :pre-process  [add-default-values (add-derived-values false)]
                        :execute      execute-insert!
                        :deref        deref-steps]
                       :wrapper-f wrapper-f
