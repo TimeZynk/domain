@@ -465,7 +465,6 @@
                                                       (pre-process-dtc :put dom-type-collection req)
                                                       dom-type-collection)
                                 restriction         (pack/pack-query dom-type-collection req)
-                                collects            (pack/pack-collects dom-type-collection req)
                                 document            (pack/pack-update dom-type-collection req)]
                             (-> (p/update-in! dom-type-collection restriction document)
                                 pack-station
