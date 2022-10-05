@@ -53,11 +53,20 @@
                                                        trail)))))
                doc)))
 
+(defn- any-masks?
+  "Truthy if any property bears a :mask attribute, falsy otherwise.
+   Recurses into :map properties."
+  [dtc]
+  (some (some-fn (comp fn? :mask val)
+                 (every-pred recurse? (comp any-masks? val)))
+        (:properties dtc)))
+
 (defn build-station
   "Builds a station which redacts from doc those properties, which:
     * have been marked for masking
     * pass the mask test"
   [action]
   (fn [dtc doc]
-    (let [redact? (build-predicate dtc doc action)]
-      (mask* redact? dtc doc []))))
+    (if (any-masks? dtc)
+      (mask* (build-predicate dtc doc action) dtc doc [])
+      doc)))
