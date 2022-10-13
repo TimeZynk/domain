@@ -288,8 +288,8 @@
                                       validate-properties2!
                                       validate-doc!
                                       validate-id-availability]
-                       :pre-process  [add-default-values (add-derived-values false)]
                        :mask         (mask/build-station :create)
+                       :pre-process  [add-default-values (add-derived-values false)]
                        :execute      execute-insert!
                        :deref        deref-steps]
                       :wrapper-f wrapper-f
@@ -300,8 +300,8 @@
                                       (partial validate-properties! true)
                                       validate-properties2!
                                       validate-doc!]
-                       :pre-process  (add-derived-values true)
                        :mask         (mask/build-station :update)
+                       :pre-process  (add-derived-values true)
                        :execute      execute-update!
                        :deref        deref-steps]
                       :wrapper-f wrapper-f
@@ -465,7 +465,6 @@
                                                       (pre-process-dtc :put dom-type-collection req)
                                                       dom-type-collection)
                                 restriction         (pack/pack-query dom-type-collection req)
-                                collects            (pack/pack-collects dom-type-collection req)
                                 document            (pack/pack-update dom-type-collection req)]
                             (-> (p/update-in! dom-type-collection restriction document)
                                 pack-station
