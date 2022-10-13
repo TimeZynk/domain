@@ -1,23 +1,17 @@
 (ns com.timezynk.domain.schema.map-test
-  (:require [clojure.test :refer [deftest is testing use-fixtures]]
+  (:require [clojure.test :refer [deftest is testing]]
             [com.timezynk.assembly-line :as a]
             [com.timezynk.domain.core :as c]
             [com.timezynk.domain.persistence :as p]
-            [com.timezynk.domain.schema :as s])
-  (:use [slingshot.test])
+            [com.timezynk.domain.schema :as s]
+            [slingshot.test])
   (:import [org.bson.types ObjectId]))
 
-(def ^:private ^:dynamic *dtc*)
-
-(def ^:private ^:const properties
-  {:x (s/map {:id (s/id)
-              :ref-no (s/integer)
-              :sold (s/boolean)})})
-
-(defn- create-dtc [f]
-  (binding [*dtc* (c/dom-type-collection :name :qwerty
-                                         :properties properties)]
-    (f)))
+(def ^:private dtc
+  (c/dom-type-collection :name :qwerty
+                         :properties {:x (s/map {:id (s/id)
+                                                 :ref-no (s/integer)
+                                                 :sold (s/boolean)})}))
 
 (def ^:private ^:const valid-doc
   {:x {:id (ObjectId.)
@@ -26,11 +20,9 @@
    :company-id (ObjectId.)})
 
 (defn- insert! [doc]
-  (-> (p/conj! *dtc* doc)
+  (-> (p/conj! dtc doc)
       (a/add-stations :replace :execute [:nop (fn [_ doc] doc)])
       deref))
-
-(use-fixtures :each create-dtc)
 
 (deftest valid
   (is (insert! valid-doc)))
