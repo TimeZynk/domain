@@ -8,19 +8,35 @@
    [com.timezynk.domain.validation.validate-type :refer [validate-type]]
    [spy.core :as spy]))
 
+(declare validate-property)
+
 (declare validate-schema)
+
+(defn- vector-validation-reducer
+  "Builds a reducer for validating vector input against the given rule.
+   Expects vector items to be [index value] pairs.
+   Returns a [valid? errors] pair."
+  [all-optional? rule]
+  (fn [acc x]
+    (let [[valid? errors] acc
+          [index item-value] x
+          [item-valid? item-errors] (validate-property [index rule]
+                                                       all-optional?
+                                                       {index item-value})]
+      [(and valid? item-valid?)
+       (merge errors item-errors)])))
 
 (defn- validate-vector [all-optional? attr-name rule vector-value]
   (if (sequential? vector-value)
-    (let [[valid? errors] (r/reduce
-                           (fn [acc v]
-                             (let [[v? e] (validate-schema all-optional? rule v)]
-                               [(and (first acc) v?)
-                                (merge (second acc) e)]))
-                           [true {}]
-                           vector-value)]
+    (let [reducer (vector-validation-reducer all-optional? rule)
+          [valid? errors] (->> vector-value
+                               (map vector (range))
+                               (r/reduce reducer [true {}]))]
       [valid? {attr-name errors}])
     [false {attr-name {:vector "not sequential"}}]))
+
+(def ^:private check-by-length?
+  (some-fn string? vector? map?))
 
 (defn- get-check-fn [all-optional? k property-name property-definition]
   (case k
@@ -30,10 +46,14 @@
     :max        (check #(>= property-definition %)
                        property-name
                        (str "bigger than " property-definition))
-    :min-length (check #(<= property-definition (count %))
+    :min-length (check #(if (check-by-length? %)
+                          (<= property-definition (count %))
+                          true)
                        property-name
                        (str "shorter than " property-definition))
-    :max-length (check #(>= property-definition (count %))
+    :max-length (check #(if (check-by-length? %)
+                          (>= property-definition (count %))
+                          true)
                        property-name
                        (str "longer than " property-definition))
     :type       (validate-type property-name property-definition)
@@ -94,9 +114,9 @@
 
 (deftest test-validate-vector
   (is (= [true {:field {}}]
-         (validate-vector false :field :string ["123"])))
-  (is (= [true {:field {}}]
-         (validate-vector false :field :number ["123"])))
+         (validate-vector false :field {:type :string} ["123"])))
+  (is (= [false {:field {0 "not a number"}}]
+         (validate-vector false :field {:type :number} ["123"])))
   (is (= [true {:field {}}]
          (validate-vector false
                           :field
@@ -249,13 +269,13 @@
                           {:properties {:values {:type :map
                                                  :properties {:field2 {:type :string}}}}}
                           {:values {:field2 "123"}})))
-  (is (thrown?
-       java.lang.ClassCastException
-       (validate-schema false
-                        {:properties {:values {:type :map
-                                               :properties {:field2 {:type :string}}}}}
-                        {:values "123"})))
-  (is (= [true {}]
+  (let [result (validate-schema false
+                                {:properties {:values {:type :map
+                                                       :properties {:field2 {:type :string}}}}}
+                                {:values "123"})]
+    (is (= false (first result)))
+    (is (= "not a map" (get-in result [1 :values]))))
+  (is (= [false {:values {0 "not a string"}}]
          (validate-schema false
                           {:properties {:values {:type :vector
                                                  :children {:type :string}}}}
@@ -292,6 +312,16 @@
                                                 :children {:type :number}
                                                 :max-length 1}}}
                           {:field [1 2]})))
+  (is (= [true {}]
+         (validate-schema false
+                          {:properties {:field {:type :integer
+                                                :min-length 3}}}
+                          {:field 12})))
+  (is (= [true {}]
+         (validate-schema false
+                          {:properties {:field {:type :integer
+                                                :max-length 3}}}
+                          {:field 1234})))
   (is (= [false {:field "does not match [0-9]+"}]
          (validate-schema false
                           {:properties {:field {:type :string
