@@ -77,7 +77,7 @@
              (not (contains? property-value property-name)))
         (and (or (:optional? property-definition)
                  (some? (:default property-definition)))
-             (nil? (property-name property-value)))
+             (nil? (get property-value property-name)))
         (:computed property-definition)
         (:derived property-definition))))
 
@@ -139,7 +139,13 @@
                           {:properties {:field1 {:type :string}}}
                           [{:field2 "123"}])))
   (is (= [false {:field {:vector "not sequential"}}]
-         (validate-vector false :field :string "123"))))
+         (validate-vector false :field :string "123")))
+  (is (= [false {:field {:field1 "not an integer"}}]
+         (validate-vector false
+                          :field
+                          {:properties {:field1 {:type :integer}}
+                           :optional? true}
+                          [{:field1 "123"}]))))
 
 (deftest test-get-check-fn
   (with-redefs [check (spy/stub)]
