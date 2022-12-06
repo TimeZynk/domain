@@ -10,13 +10,22 @@
   (isa? (class x) ObjectId))
 
 (defn- time? [x]
-  (isa? (class x) LocalTime))
+  (let [c (class x)]
+    (or
+     (isa? c LocalTime)
+     (isa? c java.time.LocalTime))))
 
 (defn- date-time? [x]
-  (isa? (class x) LocalDateTime))
+  (let [c (class x)]
+    (or
+     (isa? c LocalDateTime)
+     (isa? c java.time.LocalDateTime))))
 
 (defn- date? [x]
-  (isa? (class x) LocalDate))
+  (let [c (class x)]
+    (or
+     (isa? c LocalDate)
+     (isa? c java.time.LocalDate))))
 
 (defn- timestamp? [x]
   (and (number? x) (<= 0 x)))
@@ -44,14 +53,17 @@
 
 (deftest test-time
   (is (time? (LocalTime. "12.03")))
+  (is (time? (java.time.LocalTime/parse "14:30")))
   (is (not (time? "12.03"))))
 
 (deftest test-date-time
   (is (date-time? (LocalDateTime. "2020-10-01T12.03")))
+  (is (date-time? (java.time.LocalDateTime/parse "2020-10-01T12:03")))
   (is (not (date-time? (LocalTime. "12.03")))))
 
 (deftest test-date
   (is (date? (LocalDate. "2020-10-01")))
+  (is (date? (java.time.LocalDate/parse "2020-10-01")))
   (is (not (date? (LocalDateTime. "2020-10-01")))))
 
 (deftest test-timestamp
