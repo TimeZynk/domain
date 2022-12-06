@@ -25,11 +25,23 @@
   (lt*  [x y] (.isBefore x y))
   (lt=* [x y] (or (.isBefore x y) (= x y)))
   (eq*  [x y] (= x y))
+  java.time.LocalDateTime
+  (lt*  [x y] (.isBefore x y))
+  (lt=* [x y] (or (.isBefore x y) (= x y)))
+  (eq*  [x y] (= x y))
   LocalDate
   (lt*  [x y] (.isBefore x y))
   (lt=* [x y] (or (.isBefore x y) (= x y)))
   (eq*  [x y] (= x y))
+  java.time.LocalDate
+  (lt*  [x y] (.isBefore x y))
+  (lt=* [x y] (or (.isBefore x y) (= x y)))
+  (eq*  [x y] (= x y))
   LocalTime
+  (lt*  [x y] (.isBefore x y))
+  (lt=* [x y] (or (.isBefore x y) (= x y)))
+  (eq*  [x y] (= x y))
+  java.time.LocalTime
   (lt*  [x y] (.isBefore x y))
   (lt=* [x y] (or (.isBefore x y) (= x y)))
   (eq*  [x y] (= x y)))
@@ -52,6 +64,47 @@
 (def lt  (partial compare-rule lt*  #(str %1 " is not less than " %2)))
 (def lt= (partial compare-rule lt=* #(str %1 " is not less than or equal to " %2)))
 (def eq  (partial compare-rule eq*  #(str %1 " is not equal to " %2)))
+
+(deftest test-compare-java-time
+  (let [start (java.time.LocalDate/parse "2010-01-01")
+        end   (java.time.LocalDate/parse "2010-01-02")]
+    (testing "lt"
+      (is (= [true {}]
+             ((lt :start :end) {:start start
+                                :end end})))
+      (is (= [false #{":start is not less than :end"}]
+             ((lt :start :end) {:start end
+                                :end end})))
+      (is (= [true {}]
+             ((lt :start :end) {:start start})))
+      (is (= [true {}]
+             ((lt :start :end) {:start nil
+                                :end end}))))
+    (testing "lt="
+      (is (= [true {}]
+             ((lt= :start :end) {:start start
+                                 :end end})))
+      (is (= [true {}]
+             ((lt= :start :end) {:start start
+                                 :end start})))
+      (is (= [false #{":start is not less than or equal to :end"}]
+             ((lt= :start :end) {:start end
+                                 :end start}))))
+    (testing "eq"
+      (is (= [false #{":start is not equal to :end"}]
+             ((eq :start :end) {:start start
+                                :end end})))
+      (is (= [true {}]
+             ((eq :start :end) {:start start
+                                :end start})))
+      (is (= [false #{":start is not equal to :end"}]
+             ((eq :start :end) {:start end
+                                :end start}))))
+    (testing "exception"
+      (is (thrown-with-msg? java.lang.IllegalArgumentException
+                            #"No implementation of method"
+                            ((lt :start :end) {:start ""
+                                               :end 1}))))))
 
 (deftest test-compare
   (let [start (LocalDate. "2010-01-01")
