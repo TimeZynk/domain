@@ -44,6 +44,10 @@
   java.time.LocalTime
   (lt*  [x y] (.isBefore x y))
   (lt=* [x y] (or (.isBefore x y) (= x y)))
+  (eq*  [x y] (= x y))
+  java.time.ZonedDateTime
+  (lt*  [x y] (.isBefore x y))
+  (lt=* [x y] (or (.isBefore x y) (= x y)))
   (eq*  [x y] (= x y)))
 
 (defn- only-compare-existing-values [val-a val-b f]

@@ -19,7 +19,8 @@
   (let [c (class x)]
     (or
      (isa? c LocalDateTime)
-     (isa? c java.time.LocalDateTime))))
+     (isa? c java.time.LocalDateTime)
+     (isa? c java.time.ZonedDateTime))))
 
 (defn- date? [x]
   (let [c (class x)]
@@ -59,6 +60,7 @@
 (deftest test-date-time
   (is (date-time? (LocalDateTime. "2020-10-01T12.03")))
   (is (date-time? (java.time.LocalDateTime/parse "2020-10-01T12:03")))
+  (is (date-time? (java.time.ZonedDateTime/parse "2020-10-01T12:03+01:00[CET]")))
   (is (not (date-time? (LocalTime. "12.03")))))
 
 (deftest test-date
