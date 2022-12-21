@@ -1,4 +1,4 @@
-(defproject com.timezynk/domain "1.6.6"
+(defproject com.timezynk/domain "1.6.7"
   :description "Database modeling library for Clojure and MongoDB"
   :url "https://github.com/TimeZynk/domain/tree/master/domain"
   :license {:name "BSD 3 Clause"
