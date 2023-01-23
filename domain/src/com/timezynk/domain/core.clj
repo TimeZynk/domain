@@ -10,7 +10,7 @@
    [com.timezynk.domain.update-leafs :refer [update-leafs-via-directive]]
    [com.timezynk.domain.validation :as v]
    [com.timezynk.useful.cancan :as ability]
-   [com.timezynk.useful.date :as ud]
+   [com.timezynk.useful.date :as date]
    [com.timezynk.useful.rest :refer [json-response etag-response]]
    [compojure.core :refer [routes GET POST PUT PATCH DELETE]]
    [slingshot.slingshot :refer [throw+]]
@@ -131,11 +131,11 @@
     (v/validate-doc! validate-doc doc))
   doc)
 
-(defn validate-properties! [all-optional? {:keys [name properties]} doc]
+(defn validate-properties! [all-optional? {:keys [_name properties]} doc]
   (v/validate-properties! all-optional? properties doc)
   doc)
 
-(defn walk-schema [trail prop-spec doc]
+(defn walk-schema [trail prop-spec _doc]
   (case (:type prop-spec)
     :vector [(conj trail []), (get-in prop-spec [:children :properties])]
     :map    [trail, (:properties prop-spec)]
@@ -149,7 +149,7 @@
 
 (defn validate-properties2!
   "Extra validation, run the :validate function"
-  [{:keys [name properties]} doc]
+  [{:keys [_name properties]} doc]
   (update-leafs-via-directive properties
                               (walk-schema-with-stop :validate)
                               doc
@@ -182,7 +182,7 @@
     (update-leafs-via-directive properties
                                 (walk-schema-with-stop :derived)
                                 doc
-                                (fn [_ prop-spec v doc]
+                                (fn [_ prop-spec _v doc]
                                   (when-let [derive-fn (get prop-spec :derived)]
                                     (derive-fn doc is-update?))))))
 
@@ -192,13 +192,13 @@
   (update-leafs-via-directive properties
                               (walk-schema-with-stop :computed)
                               doc
-                              (fn [_ prop-spec v doc]
+                              (fn [_ prop-spec _v doc]
                                 (when-let [compute-fn (get prop-spec :computed)]
                                   (compute-fn doc)))))
 
 (defn cleanup-internal
   "Remove internal attributes"
-  [dtc doc]
+  [_dtc doc]
   (dissoc doc :valid-to :pid :created-ts))
 
 (defn- handle-ref-resources [properties intention doc]
@@ -260,11 +260,11 @@
 (defn execute-destroy! [{:keys [collection]} _]
   @(m/disj! collection {}))
 
-(defn execute-fetch [{:keys [collection] :as dtc} _]
+(defn execute-fetch [{:keys [collection] :as _dtc} _]
   @(m/select collection {}))
 
 (def execute-count ^{:skip-wrapper true}
-  (fn [{:keys [collection] :as dtc} _]
+  (fn [{:keys [collection] :as _dtc} _]
     @(m/select-count collection {})))
 
                                         ; AssemblyLines
@@ -366,10 +366,10 @@
 (defn dom-http-headers [restriction last-modified]
   (when last-modified
     (merge
-     {"Last-Modified" (ud/to-rfc-1123 last-modified)}
+     {"Last-Modified" (date/to-rfc-1123 last-modified)}
      (if (= #{:vid :id :company-id} (set (keys restriction)))
        {"Cache-Control" "private"
-        "Expires" (ud/to-rfc-1123 (.plus last-modified 1209600000))}
+        "Expires" (date/to-rfc-1123 (.plus last-modified 1209600000))}
        {"Cache-Control" "max-age=1,must-revalidate,private"
         "Expires" nil}))))
 
@@ -379,7 +379,7 @@
         (.withMillisOfSecond 0)
         (.plusSeconds 1))))
 
-(defn dom-response [doc req restriction collects]
+(defn dom-response [doc req _restriction _collects]
   (etag-response req doc))
 
 (defn get-dtc-name [dtc]
@@ -399,7 +399,7 @@
            (list-truthy
 
             (when index
-              (GET path req
+              (GET path _req
                 (fn [req]
                   (binding [*request* req]
                     (let [dom-type-collection (if pre-process-dtc
@@ -419,7 +419,7 @@
                           (dom-response req restriction collects)))))))
 
             (when post
-              (POST path req
+              (POST path _req
                 (fn [req]
                   (binding [*request* req]
                     (let [dom-type-collection (if pre-process-dtc
@@ -439,7 +439,7 @@
                           json-response))))))
 
             (when post
-              (POST (str "/bulk" path) req
+              (POST (str "/bulk" path) _req
                 (fn [req]
                   (binding [*request* req]
                     (let [dom-type-collection (if pre-process-dtc
@@ -477,11 +477,11 @@
                                 deref
                                 first
                                 json-response))))]
-                [(PUT p req f)
-                 (PATCH p req f)]))
+                [(PUT p _req f)
+                 (PATCH p _req f)]))
 
             (when put
-              (PUT (str "/archive" path) req
+              (PUT (str "/archive" path) _req
                 (fn [req]
                   (binding [*request* req]
                     (let [dom-type-collection (if pre-process-dtc
@@ -491,7 +491,7 @@
                       (-> (p/update-in! dom-type-collection
                                         restriction
                                         {:archived (System/currentTimeMillis)})
-                          (authorize-station (fn [dtc doc]
+                          (authorize-station (fn [_dtc doc]
                                                (ability/authorize! :update
                                                                    (get-dtc-name dom-type-collection)
                                                                    restriction ; or restriction?
@@ -501,7 +501,7 @@
                           deref
                           json-response))))))
             (when put
-              (PUT (str "/restore" path) req
+              (PUT (str "/restore" path) _req
                 (fn [req]
                   (binding [*request* req]
                     (let [dom-type-collection (if pre-process-dtc
@@ -511,7 +511,7 @@
                       (-> (p/update-in! dom-type-collection
                                         restriction
                                         {:archived nil})
-                          (authorize-station (fn [dtc doc]
+                          (authorize-station (fn [_dtc doc]
                                                (ability/authorize! :update
                                                                    (get-dtc-name dom-type-collection)
                                                                    restriction ; or restriction?
@@ -521,7 +521,7 @@
                           deref
                           json-response))))))
             (when get
-              (GET (str path "/:id") req
+              (GET (str path "/:id") _req
                 (fn [req]
                   (binding [*request* req]
                     (let [dom-type-collection (if pre-process-dtc
@@ -531,7 +531,7 @@
                           collects            (pack/pack-collects dom-type-collection req)]
                       (-> (p/select dom-type-collection restriction collects)
                           (authorize-read-station
-                           (fn [dtc doc]
+                           (fn [_dtc doc]
                              (ability/authorize! :read
                                                  (get-dtc-name dom-type-collection)
                                                  doc)
@@ -542,7 +542,7 @@
                           (dom-response req restriction collects)))))))
 
             (when (and get (not (:skip-logging dom-type-collection)))
-              (GET (str path "/:id/log") req
+              (GET (str path "/:id/log") _req
                 (fn [req]
                   (binding [*request* req]
                     (let [dom-type-collection (if pre-process-dtc
@@ -554,7 +554,7 @@
                            json-response))))))
 
             (when delete
-              (DELETE (str path "/:id") req
+              (DELETE (str path "/:id") _req
                 (fn [req]
                   (binding [*request* req]
                     (let [dom-type-collection (if pre-process-dtc
@@ -562,7 +562,7 @@
                                                 dom-type-collection)
                           restriction         (pack/pack-query dom-type-collection req)]
                       (-> (p/disj! dom-type-collection restriction)
-                          (authorize-station (fn [dtc doc]
+                          (authorize-station (fn [_dtc doc]
                                                (ability/authorize! :delete
                                                                    (get-dtc-name dom-type-collection)
                                                                    (:params *request*) ; or restriction?
@@ -573,7 +573,7 @@
                           json-response))))))
 
             (when delete
-              (DELETE (str "/bulk" path) req
+              (DELETE (str "/bulk" path) _req
                 (fn [req]
                   (binding [*request* req]
                     (let [dom-type-collection (if pre-process-dtc
@@ -582,7 +582,7 @@
                           restriction         (pack/pack-post-query dom-type-collection req)]
                       (-> (p/disj! dom-type-collection restriction)
                           (authorize-station
-                           (fn [dtc doc]
+                           (fn [_dtc doc]
                              (ability/authorize-all! :delete
                                                      (get-dtc-name dom-type-collection)
                                                      @(p/select dom-type-collection restriction))

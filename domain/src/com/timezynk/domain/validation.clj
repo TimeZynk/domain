@@ -7,7 +7,7 @@
    [com.timezynk.domain.validation.only-these :refer [only-these]]
    [com.timezynk.domain.validation.set :as set]
    [com.timezynk.domain.validation.validate :refer [validate-property validate-schema]]
-   [com.timezynk.useful.date :as ud]
+   [com.timezynk.useful.date :as date]
    [slingshot.slingshot :refer [throw+]]))
 
 ;; --------------------
@@ -65,7 +65,7 @@
 
 (defn validate-json-input!
   "Validates each property. Expects to validate if a json structure can be packed."
-  [properties doc]
+  [_properties _doc]
   :todo)
 
 (defn validate-properties!
@@ -92,7 +92,9 @@
                :errors  err-messages}))))
 
 (defn- valid-date-string? [v]
-  (or (ud/date-string? v) (ud/date-time-string? v)))
+  (try
+    (date/to-datetime v)
+    (catch Exception _e)))
 
 (def match-param-values #{"start-in" "intersects"})
 (spec/def ::start valid-date-string?)
