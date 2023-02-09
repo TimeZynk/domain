@@ -5,7 +5,7 @@
    [clojure.string :as s]
    [clojure.walk :refer [postwalk-replace]]
    [com.timezynk.domain.update-leafs :refer [update-leafs]]
-   [com.timezynk.useful.date :as ud]
+   [com.timezynk.useful.date :as date]
    [com.timezynk.useful.mongo :as um :refer [object-id? intersecting-query start-inside-period-query]]
    [slingshot.slingshot :refer [throw+]]))
 
@@ -111,9 +111,9 @@
                 domain-type?
                 unpack
                 vid
-                only-keys
+                _only-keys
                 target]
-         :as collect-def} (get-in properties [property-name :collect])]
+         :as _collect-def} (get-in properties [property-name :collect])]
     [target
      (-> options
          (assoc :collection collection
@@ -136,9 +136,9 @@
 
 (defn filter-params [params properties flag]
   (apply dissoc params
-         (map (fn [[k p]] k)
+         (map (fn [[k _p]] k)
               (filter
-               (fn [[k p]]
+               (fn [[_k p]]
                  (get p flag))
                properties))))
 
@@ -185,68 +185,68 @@
      (assoc acc (keyword (str "values." (name k))) v))
    {} values))
 
-(defmethod pack-property :any [_ v props] v)
+(defmethod pack-property :any [_ v _props] v)
 
-(defmethod pack-property :string [_ v props]
+(defmethod pack-property :string [_ v _props]
   (when v
     (if (string? v)
       (let [^String trimmed (s/trim v)]
         (when-not (.isEmpty ^String trimmed) trimmed))
       (.toString v))))
 
-(defmethod pack-property :object-id [_ v props]
+(defmethod pack-property :object-id [_ v _props]
   (cond-> v
     (object-id? v) (um/object-id)))
 
-(defmethod pack-property :date [trail v props]
+(defmethod pack-property :date [trail v _props]
   (try
-    (ud/->local-date v)
+    (date/to-localdate v)
     (catch Exception e
       (throw+
        {:code 400
         :message (str "Parse error at path [\"" (s/join "\", \"" (map name trail)) "\"]. " (.getMessage e))}))))
 
-(defmethod pack-property :time [trail v props]
+(defmethod pack-property :time [trail v _props]
   (try
-    (ud/->local-time v)
+    (date/to-time v)
     (catch Exception e
       (throw+
        {:code 400
         :message (str "Parse error at path [\"" (s/join "\", \"" (map name trail)) "\"]. " (.getMessage e))}))))
 
-(defmethod pack-property :date-time [trail v props]
+(defmethod pack-property :date-time [trail v _props]
   (try
-    (ud/->local-datetime v)
+    (date/to-datetime v)
     (catch Exception e
       (throw+
        {:code 400
         :message (str "Parse error at path [\"" (s/join "\", \"" (map name trail)) "\"]. " (.getMessage e))}))))
 
-(defmethod pack-property :number [_ v props]
+(defmethod pack-property :number [_ v _props]
   (if (string? v)
     (edn/read-string v)
     (if (ratio? v)
       (double v)
       v)))
 
-(defmethod pack-property :integer [_ v props]
+(defmethod pack-property :integer [_ v _props]
   (if (string? v)
     (edn/read-string v)
     v))
 
-(defmethod pack-property :duration [_ v props]
+(defmethod pack-property :duration [_ v _props]
   (if (string? v)
     (edn/read-string v)
     (if (ratio? v)
       (double v)
       v)))
 
-(defmethod pack-property :timestamp [_ v props]
+(defmethod pack-property :timestamp [_ v _props]
   (let [parsed (if (string? v) (edn/read-string v) v)]
     ; Accept false and turn it into nil for backwards compatibility on the archived field
     (if (not parsed) nil parsed)))
 
-(defmethod pack-property :boolean [trail v props]
+(defmethod pack-property :boolean [_trail v _props]
   (if (string? v)
     (edn/read-string v)
     (if v true v)))
@@ -256,8 +256,8 @@
     v
     (pack-property (conj trail []) v props)))
 
-(defmethod pack-property :map [_ v props]
+(defmethod pack-property :map [_ v _props]
   v)
 
-(defmethod pack-property nil [trail v props]
+(defmethod pack-property nil [_trail v _props]
   v)
