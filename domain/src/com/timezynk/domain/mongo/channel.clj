@@ -4,7 +4,8 @@
    [com.timezynk.useful.channel :as c]
    [com.timezynk.useful.mongo.db :refer [db]]
    [com.timezynk.useful.prometheus.core :as metrics]
-   [somnium.congomongo :as mongo]))
+   [somnium.congomongo :as mongo])
+  (:import [org.bson.types ObjectId]))
 
 (def ^:const WAIT_TIMEOUT 10000)
 
@@ -30,7 +31,7 @@
       (->> (map vector (or new (repeat nil))
                 (or old (repeat nil)))
            (c/publish! @channel
-                       (or context (:id context/*request*))
+                       (or context (:id context/*request*) (ObjectId.))
                        topic
                        cname)
            (c/wait-for WAIT_TIMEOUT)))))
