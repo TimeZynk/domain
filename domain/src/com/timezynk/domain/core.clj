@@ -2,6 +2,7 @@
   (:require
    [clojure.core.reducers :as r]
    [com.timezynk.assembly-line :as line :refer [assembly-line]]
+   [com.timezynk.domain.context :as context]
    [com.timezynk.domain.mask :as mask]
    [com.timezynk.domain.mongo.core :as m]
    [com.timezynk.domain.pack :as pack]
@@ -385,8 +386,6 @@
 (defn get-dtc-name [dtc]
   (or (:ability-name dtc) (:name dtc)))
 
-(def ^:dynamic *request* nil)
-
 (defn rest-routes [dom-type-collection & {:keys [index post put get delete path pre-process-dtc]
                                           :or {index  true
                                                post   true
@@ -401,7 +400,7 @@
             (when index
               (GET path req
                 (fn [req]
-                  (binding [*request* req]
+                  (binding [context/*request* req]
                     (let [dom-type-collection (if pre-process-dtc
                                                 (pre-process-dtc :index dom-type-collection req)
                                                 dom-type-collection)
@@ -421,7 +420,7 @@
             (when post
               (POST path req
                 (fn [req]
-                  (binding [*request* req]
+                  (binding [context/*request* req]
                     (let [dom-type-collection (if pre-process-dtc
                                                 (pre-process-dtc :post dom-type-collection req)
                                                 dom-type-collection)
@@ -441,7 +440,7 @@
             (when post
               (POST (str "/bulk" path) req
                 (fn [req]
-                  (binding [*request* req]
+                  (binding [context/*request* req]
                     (let [dom-type-collection (if pre-process-dtc
                                                 (pre-process-dtc :post dom-type-collection req)
                                                 dom-type-collection)
@@ -460,7 +459,7 @@
             (when put
               (let [p (str path "/:id")
                     f (fn [req]
-                        (binding [*request* req]
+                        (binding [context/*request* req]
                           (let [dom-type-collection (if pre-process-dtc
                                                       (pre-process-dtc :put dom-type-collection req)
                                                       dom-type-collection)
@@ -483,7 +482,7 @@
             (when put
               (PUT (str "/archive" path) req
                 (fn [req]
-                  (binding [*request* req]
+                  (binding [context/*request* req]
                     (let [dom-type-collection (if pre-process-dtc
                                                 (pre-process-dtc :put dom-type-collection req)
                                                 dom-type-collection)
@@ -503,7 +502,7 @@
             (when put
               (PUT (str "/restore" path) req
                 (fn [req]
-                  (binding [*request* req]
+                  (binding [context/*request* req]
                     (let [dom-type-collection (if pre-process-dtc
                                                 (pre-process-dtc :put dom-type-collection req)
                                                 dom-type-collection)
@@ -523,7 +522,7 @@
             (when get
               (GET (str path "/:id") req
                 (fn [req]
-                  (binding [*request* req]
+                  (binding [context/*request* req]
                     (let [dom-type-collection (if pre-process-dtc
                                                 (pre-process-dtc :get dom-type-collection req)
                                                 dom-type-collection)
@@ -544,7 +543,7 @@
             (when (and get (not (:skip-logging dom-type-collection)))
               (GET (str path "/:id/log") req
                 (fn [req]
-                  (binding [*request* req]
+                  (binding [context/*request* req]
                     (let [dom-type-collection (if pre-process-dtc
                                                 (pre-process-dtc :get dom-type-collection req)
                                                 dom-type-collection)
@@ -556,7 +555,7 @@
             (when delete
               (DELETE (str path "/:id") req
                 (fn [req]
-                  (binding [*request* req]
+                  (binding [context/*request* req]
                     (let [dom-type-collection (if pre-process-dtc
                                                 (pre-process-dtc :delete dom-type-collection req)
                                                 dom-type-collection)
@@ -565,7 +564,7 @@
                           (authorize-station (fn [dtc doc]
                                                (ability/authorize! :delete
                                                                    (get-dtc-name dom-type-collection)
-                                                                   (:params *request*) ; or restriction?
+                                                                   (:params context/*request*) ; or restriction?
                                                                    )
                                                doc))
                           (add-stations* delete)
@@ -575,7 +574,7 @@
             (when delete
               (DELETE (str "/bulk" path) req
                 (fn [req]
-                  (binding [*request* req]
+                  (binding [context/*request* req]
                     (let [dom-type-collection (if pre-process-dtc
                                                 (pre-process-dtc :delete dom-type-collection req)
                                                 dom-type-collection)
