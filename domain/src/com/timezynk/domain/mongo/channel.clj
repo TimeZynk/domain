@@ -1,5 +1,6 @@
 (ns com.timezynk.domain.mongo.channel
   (:require
+   [com.timezynk.domain.context :as context]
    [com.timezynk.useful.channel :as c]
    [com.timezynk.useful.mongo.db :refer [db]]
    [com.timezynk.useful.prometheus.core :as metrics]
@@ -21,12 +22,15 @@
           (f topic cname new-doc old-doc)
           (metrics/inc-by! handler-time (/ (double (- (System/nanoTime) start-time)) 1000000000.0) fn-name))))))
 
-(defn put! [topic cname new & [old]]
+(defn put! [topic cname & {:keys [new old context]}]
   (when (and topic cname (or (seq new) (seq old)))
     (binding [c/*debug* false]
       (->> (map vector (or new (repeat nil))
                 (or old (repeat nil)))
-           (c/publish! @channel topic cname)
+           (c/publish! @channel
+                       (or context (:id context/*request*))
+                       topic
+                       cname)
            (c/wait-for WAIT_TIMEOUT)))))
 
 (defn- init-channel []
