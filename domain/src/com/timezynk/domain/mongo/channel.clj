@@ -16,10 +16,12 @@
 
 (defn f-wrapper [f]
   (let [fn-name (str f)]
-    (fn [topic cname [new-doc old-doc]]
+    (fn [topic cname context [new-doc old-doc]]
       (mongo/with-mongo @db
-        (let [start-time (System/nanoTime)]
-          (f topic cname new-doc old-doc)
+        (let [start-time (System/nanoTime)
+              current-request (or context/*request* {:id context})]
+          (binding [context/*request* current-request]
+            (f topic cname new-doc old-doc))
           (metrics/inc-by! handler-time (/ (double (- (System/nanoTime) start-time)) 1000000000.0) fn-name))))))
 
 (defn put! [topic cname & {:keys [new old context]}]
