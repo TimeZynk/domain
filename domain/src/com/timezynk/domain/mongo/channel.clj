@@ -15,7 +15,7 @@
                                        "A counter of the total user time used for a handler"
                                        :function))
 
-(defn f-wrapper [f]
+(defn- f-wrapper [f]
   (let [fn-name (str f)]
     (fn [topic cname context [new-doc old-doc]]
       (mongo/with-mongo @db
