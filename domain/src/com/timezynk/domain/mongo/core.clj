@@ -70,7 +70,9 @@
           new (if (seq new) (mongo/insert! cname new :many true) [])
           new (map rename-ids-out new)]
       ; (debug (.getName (Thread/currentThread)) "insert! completed for" cname)
-      (mchan/put! :insert cname new)
+      (mchan/put! :insert
+                  cname
+                  :new new)
       ; (debug (.getName (Thread/currentThread)) "insert! mchan/put! completed for" cname)
       new)))
 
@@ -94,7 +96,10 @@
           newlings    (map (fn [d] (merge d new-doc)) oldies)
           newlings    (map rename-ids-out newlings)
           oldies      (map rename-ids-out oldies)]
-      (mchan/put! :update cname newlings oldies)
+      (mchan/put! :update
+                  cname
+                  :new newlings
+                  :old oldies)
       newlings)))
 
 (defn update! [cname restriction new-doc]
@@ -134,7 +139,10 @@
       ; (debug (.getName (Thread/currentThread)) "update! completed for" cname)
 
 
-      (mchan/put! :update cname newlings oldies)
+      (mchan/put! :update
+                  cname
+                  :new newlings
+                  :old oldies)
       ; (debug (.getName (Thread/currentThread)) "update! mchan/put! completed for" cname)
       newlings)))
 
@@ -149,7 +157,9 @@
                            (map
                             (fn [o] (assoc o :deleted-by deleted-by))
                             oldies))]
-      (mchan/put! :delete cname nil oldies)
+      (mchan/put! :delete
+                  cname
+                  :old oldies)
       {:deleted-no (.getN result)})))
 
 (defn- destroy! [cname restriction]
@@ -177,7 +187,9 @@
                                         :user-id deleted-by}))
           _           (mongo/destroy! cname (assoc query :valid-to now))]
       ; (debug (.getName (Thread/currentThread)) "destroy! completed for" cname)
-      (mchan/put! :delete cname nil (map rename-ids-out deleted))
+      (mchan/put! :delete
+                  cname
+                  :old (map rename-ids-out deleted))
       ; (debug (.getName (Thread/currentThread)) "destroy! mchan/put! completed for" cname)
       {:deleted-no (.getN result)})))
 
