@@ -1,9 +1,8 @@
 (ns com.timezynk.domain.mongo.channel
   (:require
    [com.timezynk.useful.channel :as c]
-   [com.timezynk.domain.context :as context]
-   [com.timezynk.domain.mongo.channel.hook :refer [->PerformanceTrackingHook]])
-  (:import [org.bson.types ObjectId]))
+   [com.timezynk.domain.mongo.channel.context :as context]
+   [com.timezynk.domain.mongo.channel.hook :refer [->PerformanceTrackingHook]]))
 
 (def ^:const WAIT_TIMEOUT 10000)
 
@@ -15,7 +14,9 @@
       (->> (map vector (or new (repeat nil))
                 (or old (repeat nil)))
            (c/publish! @channel
-                       (or context (:id context/*request*) (ObjectId.))
+                       (or context
+                           (context/from-request)
+                           (context/placeholder))
                        topic
                        cname)
            (c/wait-for WAIT_TIMEOUT)))))
