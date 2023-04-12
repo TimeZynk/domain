@@ -5,7 +5,7 @@
             :url "https://opensource.org/licenses/BSD-3-Clause"}
   :scm {:name "git"
         :url  "https://github.com/TimeZynk/domain"}
-  :dependencies [[com.novemberain/validateur "2.6.0"]
+  :dependencies [[com.novemberain/validateur "1.2.0"]
                  [com.timezynk/assembly-line "1.0.0"]
                  [com.timezynk/useful "1.20.13"]
                  [compojure "1.7.0" :scope "provided" :exclusions [commons-codec]]
