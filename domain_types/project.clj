@@ -1,4 +1,4 @@
-(defproject com.timezynk/domain-types "1.0.2"
+(defproject com.timezynk/domain-types "1.0.3"
   :description "FIXME: write description"
   :url "http://example.com/FIXME"
   :license {:name "BSD 3 Clause"
