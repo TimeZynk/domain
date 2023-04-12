@@ -6,7 +6,7 @@
   :scm {:name "git"
         :url  "https://github.com/TimeZynk/domain"}
   :dependencies [[ch.qos.logback/logback-classic "1.4.6"]
-                 [com.novemberain/validateur "2.6.0"]
+                 [com.novemberain/validateur "1.2.0"]
                  [com.timezynk/assembly-line "1.0.0"]
                  [com.timezynk/useful "1.21.0"]
                  [compojure "1.7.0" :scope "provided" :exclusions [commons-codec]]
