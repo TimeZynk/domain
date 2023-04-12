@@ -6,5 +6,5 @@
   :scm {:name "git"
         :url  "https://github.com/TimeZynk/domain"}
   :dependencies [
-    [org.clojure/clojure "1.10.1" :scope "provided"]
+    [org.clojure/clojure "1.11.1" :scope "provided"]
   ])
