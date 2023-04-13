@@ -8,6 +8,5 @@
                  [congomongo "2.6.0" :scope "provided"]
                  [org.clojure/clojure "1.11.1" :scope "provided"]
                  [slingshot "0.12.2"]]
-  :local-repo ".m2"
   :repl-options {:init-ns domain-types.core}
   :plugins [[lein-cljfmt "0.6.7"]])
