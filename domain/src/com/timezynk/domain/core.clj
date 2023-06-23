@@ -8,6 +8,7 @@
    [com.timezynk.domain.pack :as pack]
    [com.timezynk.domain.persistence :as p]
    [com.timezynk.domain.schema :as s]
+   [com.timezynk.domain.schema.convert :as convert]
    [com.timezynk.domain.update-leafs :refer [update-leafs-via-directive]]
    [com.timezynk.domain.validation :as v]
    [com.timezynk.useful.cancan :as ability]
@@ -138,7 +139,7 @@
 
 (defn walk-schema [trail prop-spec _doc]
   (case (:type prop-spec)
-    :vector [(conj trail []), (get-in prop-spec [:children :properties])]
+    :vector [(conj trail []), (:children prop-spec)]
     :map    [trail, (:properties prop-spec)]
     [trail]))
 
@@ -201,6 +202,16 @@
   "Remove internal attributes"
   [_dtc doc]
   (dissoc doc :valid-to :pid :created-ts))
+
+(defn- nudge-types
+  "Convert incoming type to expected type for all properties, if possible.
+   Otherwise, do nothing."
+  [dtc doc]
+  (update-leafs-via-directive (:properties dtc)
+                              walk-schema
+                              doc
+                              (fn [_trail property-definition value _doc]
+                                (convert/nudge value property-definition))))
 
 (defn- handle-ref-resources [properties intention doc]
   (r/reduce (fn [acc k v]
@@ -276,7 +287,7 @@
                  (f dom-type-collection docs))]
     (with-meta v (meta docs))))
 
-(def deref-steps [collect-computed cleanup-internal])
+(def deref-steps [collect-computed cleanup-internal nudge-types])
 
 (def destroy! (partial assembly-line
                        [:execute execute-destroy!

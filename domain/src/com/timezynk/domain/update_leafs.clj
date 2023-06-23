@@ -61,13 +61,15 @@
                                    (update-in x
                                               parent-path
                                               (fn [y]
-                                                (map
-                                                 #(walk-directives sub-dir
-                                                                   dir-fun
-                                                                   ()
-                                                                   %
-                                                                   upd-fun
-                                                                   args)
+                                                (mapcat
+                                                 (comp vals
+                                                       #(walk-directives
+                                                         {:_ sub-dir}
+                                                         dir-fun
+                                                         '()
+                                                         {:_ %}
+                                                         upd-fun
+                                                         args))
                                                  y)))
                                    (walk-directives sub-dir dir-fun trail x upd-fun args))
                                  x)]
