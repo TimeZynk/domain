@@ -1,6 +1,8 @@
 (ns com.timezynk.domain.utils
   (:require [spy.core :refer [stub]]
-            [com.timezynk.domain.mongo.core :as m]))
+            [com.timezynk.domain.core :as dom]
+            [com.timezynk.domain.mongo.core :as m]
+            [com.timezynk.domain.persistence :as p]))
 
 (defn build-immutable-inmemory-store
   "Builds a fixture which overrides mongo.core functions so that the end result
@@ -14,3 +16,19 @@
                   m/destroy-fast! (stub {})
                   m/destroy!      (stub {})]
       (f))))
+
+(def dom-type-collection
+  "Shorthand for reducing repetition."
+  (partial dom/dom-type-collection :name :abc))
+
+(defn select
+  "Shorthand for selecting `doc` as if it were persisted."
+  [dtc doc]
+  (with-redefs [m/fetch (stub [doc])]
+    (p/->1 dtc p/select)))
+
+(defn insert
+  "Shorthand for inserting `doc` without persisting it."
+  [dtc doc]
+  (with-redefs [m/insert! (constantly doc)]
+    (p/->1 dtc (p/conj! doc))))
