@@ -152,18 +152,17 @@
 
 (defn validate-properties2!
   "Extra validation, run the :validate function"
-  [{:keys [_name properties]} doc]
-  (update-leafs-via-directive properties
-                              (walk-schema-with-stop :validate)
-                              doc
-                              (fn [[prop-name] prop-spec v doc]
-                                (when-let [validate-fn (get prop-spec :validate)]
-                                  (when-let [errs (validate-fn v doc)]
-                                    (throw+ {:type     :validation-error
-                                             :property prop-name
-                                             :errors   errs})))
-                                v))
-  doc)
+  [dtc doc]
+  (sw/update-properties doc
+                        (:properties dtc)
+                        (fn [value property-definition]
+                          (let [f (:validate property-definition)
+                                errors (and (fn? f) (f value doc))]
+                              (when errors
+                                (throw+ {:type :validation-error
+                                         :property :x
+                                         :errors errors}))
+                              value))))
 
 (defn add-default-values
   "Like add-derived-values, but only when the doc is created"
