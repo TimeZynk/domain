@@ -30,5 +30,5 @@
 (defn insert
   "Shorthand for inserting `doc` without persisting it."
   [dtc doc]
-  (with-redefs [m/insert! (constantly doc)]
+  (with-redefs [m/insert! (fn [_ doc] (into [] doc))]
     (p/->1 dtc (p/conj! doc))))
