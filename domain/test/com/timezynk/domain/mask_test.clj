@@ -88,9 +88,7 @@
 
 (deftest updating-with-derived
   (with-redefs [m/update! (spy/spy (fn [_ _ doc] doc))]
-    (let [dfn (fn [{:keys [x]} _]
-                (cond-> x
-                  x inc))
+    (let [dfn (fn [doc _] (nil? (:x doc)))
           dtc (u/dtc {:x (s/integer :mask *f*)
                       :y (s/integer :derived dfn)})
           doc {:x 10}]
@@ -101,4 +99,4 @@
                                   (not (contains? doc :x)))))
         (is (spy/call-matching? m/update!
                                 (fn [[_ _ doc]]
-                                  (not (contains? doc :y)))))))))
+                                  (true? (:y doc)))))))))

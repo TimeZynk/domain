@@ -16,9 +16,11 @@
     (is (= [] (:x out)))))
 
 (deftest on-vector
-  (let [dtc (u/dtc {:x (s/vector (s/number) :computed (constantly [-2]))})
+  (let [dtc (u/dtc {:x (s/vector (s/number) :computed (constantly [-2]))
+                    :y (s/vector (s/number) :computed (constantly []))})
         out (u/insert dtc {})]
-    (is (= [-2] (:x out)))))
+    (is (= [-2] (:x out)))
+    (is (= [] (:y out)))))
 
 (deftest in-map
   (let [dtc (u/dtc {:x (s/map {:y (s/number :computed f)})})
@@ -34,7 +36,7 @@
   (let [dtc (u/dtc {:x (s/map {:y (s/number :computed f)}
                               :optional? true)})
         out (u/insert dtc {})]
-    (is (= 42 (get-in out [:x :y])))))
+    (is (not (contains? out :x)))))
 
 (deftest in-vector-of-maps
   (let [dtc (u/dtc {:x (s/vector (s/map {:y (s/number :computed f)}))})
