@@ -60,7 +60,7 @@
         (testing "top-level property action"
           (is (call-matching? ability/can? (comp #{:read-property-y} first))))
         (testing "nested property action"
-          (is (call-matching? ability/can? (comp #{:read-property-z.z2} first))))
+          (is (call-matching? ability/can? (comp #{:read-property-z2} first))))
         (testing "object"
           (is (call-matching? ability/can? (comp #{:qwerty} second))))))))
 

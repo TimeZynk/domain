@@ -17,49 +17,7 @@
                           :properties {:x (s/string)
                                        :y (s/string :mask mf)
                                        :z (s/string)}))"
-  (:require [clojure.string :as string]))
-
-(defn- recurse?
-  [property]
-  (= :map (:type (val property))))
-
-(defn- build-predicate
-  "Builds a predicate which decides whether a (potentially nested) property
-   should be removed from the document."
-  [dtc doc action]
-  (fn [trail]
-    (let [mask (get-in dtc (concat (interleave (repeat :properties) trail)
-                                   [:mask]))]
-      (and (fn? mask)
-           (mask dtc doc action (->> trail
-                                     (map name)
-                                     (string/join \.)))))))
-
-(defn- mask*
-  "Redacts all properties from doc for which redact? is true.
-   Recurses for :map properties."
-  [redact? dtc doc trail]
-  (->> (:properties dtc)
-       (filter (comp (set (keys doc)) key))
-       (reduce (fn [acc property]
-                 (let [property-name (key property)
-                       trail (conj trail property-name)]
-                   (cond-> acc
-                     (redact? trail) (dissoc property-name)
-                     (recurse? property) (assoc property-name
-                                                (mask* redact?
-                                                       (val property)
-                                                       (get acc property-name)
-                                                       trail)))))
-               doc)))
-
-(defn- any-masks?
-  "Truthy if any property bears a :mask attribute, falsy otherwise.
-   Recurses into :map properties."
-  [dtc]
-  (some (some-fn (comp fn? :mask val)
-                 (every-pred recurse? (comp any-masks? val)))
-        (:properties dtc)))
+  (:require [com.timezynk.domain.schema.walk :as sw]))
 
 (defn build-station
   "Builds a station which redacts from doc those properties, which:
@@ -67,6 +25,11 @@
     * pass the mask test"
   [action]
   (fn [dtc doc]
-    (if (any-masks? dtc)
-      (mask* (build-predicate dtc doc action) dtc doc [])
-      doc)))
+    (sw/update-properties doc
+                          (:properties dtc)
+                          (fn [subdoc k spec]
+                            (let [f (:mask spec)
+                                  redact? (and (fn? f)
+                                               (f dtc subdoc action (name k)))]
+                              (cond-> subdoc
+                                redact? (dissoc k)))))))

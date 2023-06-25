@@ -40,7 +40,7 @@
       (is (contains? result-doc :x))
       (is (not (contains? (:x result-doc) :z))))
     (testing "masking function property-name"
-      (is (spy/call-matching? f (mu/property-name-matcher "x.z"))))))
+      (is (spy/call-matching? f (mu/property-name-matcher "z"))))))
 
 (deftest creating
   (let [f (spy/stub true)
