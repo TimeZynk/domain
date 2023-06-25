@@ -10,7 +10,6 @@
    [com.timezynk.domain.schema :as s]
    [com.timezynk.domain.schema.convert :as convert]
    [com.timezynk.domain.schema.walk :as sw]
-   [com.timezynk.domain.update-leafs :refer [update-leafs-via-directive]]
    [com.timezynk.domain.validation :as v]
    [com.timezynk.useful.cancan :as ability]
    [com.timezynk.useful.date :as date]
@@ -138,18 +137,6 @@
   (v/validate-properties! all-optional? properties doc)
   doc)
 
-(defn walk-schema [trail prop-spec _doc]
-  (case (:type prop-spec)
-    :vector [(conj trail []), (:children prop-spec)]
-    :map    [trail, (:properties prop-spec)]
-    [trail]))
-
-(defn walk-schema-with-stop [f]
-  (fn [trail prop-spec doc]
-    (if (f prop-spec)
-      [trail]
-      (walk-schema trail prop-spec doc))))
-
 (defn validate-properties2!
   "Extra validation, run the :validate function"
   [dtc doc]
@@ -180,13 +167,13 @@
 (defn add-derived-values
   "Add values derived from other doc values."
   [is-update?]
-  (fn [{:keys [properties]} doc]
-    (update-leafs-via-directive properties
-                                (walk-schema-with-stop :derived)
-                                doc
-                                (fn [_ prop-spec _v doc]
-                                  (when-let [derive-fn (get prop-spec :derived)]
-                                    (derive-fn doc is-update?))))))
+  (fn [dtc doc]
+    (sw/update-properties doc
+                          (:properties dtc)
+                          (fn [subdoc k spec]
+                            (let [f (:derived spec)]
+                              (cond-> subdoc
+                                f (assoc k (f doc is-update?))))))))
 
 (defn collect-computed
   "Collect computed values, for example cached values."

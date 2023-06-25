@@ -24,12 +24,11 @@
 (defmethod editor :map
   [schema f]
   (fn [subdoc k]
-    (let [before (get subdoc k)
-          after (reduce-kv (fn [acc k v] ((bound-editor v f) acc k))
-                           before
+    (let [edit #(reduce-kv (fn [acc k v] ((bound-editor v f) acc k))
+                           %
                            (:properties schema))]
       (cond-> subdoc
-        after (assoc k after)))))
+        (get subdoc k) (update k edit)))))
 
 (defmethod editor :default
   [_ _]
