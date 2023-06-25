@@ -2,15 +2,13 @@
   (:require [clojure.test :refer [deftest is testing]]
             [slingshot.test]
             [com.timezynk.domain.schema :as s]
-            [com.timezynk.domain.utils :as u])
-  (:import [org.bson.types ObjectId]))
+            [com.timezynk.domain.utils :as u]))
 
 (def ^:private dtc
   (u/dtc {:x (s/vector (s/integer))}))
 
 (def ^:private ^:const valid-doc
-  {:x [1 2 3]
-   :company-id (ObjectId.)})
+  {:x [1 2 3]})
 
 (deftest valid
   (is (u/insert dtc valid-doc)))

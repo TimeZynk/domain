@@ -13,8 +13,7 @@
 (def ^:private ^:const valid-doc
   {:x {:id (ObjectId.)
        :ref-no 123
-       :sold true}
-   :company-id (ObjectId.)})
+       :sold true}})
 
 (deftest valid
   (is (u/insert dtc valid-doc)))

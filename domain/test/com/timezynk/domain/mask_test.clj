@@ -5,8 +5,7 @@
             [com.timezynk.domain.mongo.core :as m]
             [com.timezynk.domain.persistence :as p]
             [com.timezynk.domain.schema :as s]
-            [com.timezynk.domain.utils :as u])
-  (:import [org.bson.types ObjectId]))
+            [com.timezynk.domain.utils :as u]))
 
 (def ^:dynamic *f* nil)
 
@@ -46,7 +45,7 @@
 (deftest creating
   (let [dtc (u/dtc {:x (s/string :mask *f*)
                     :y (s/string)})
-        original-doc {:x "123" :y "abc" :company-id (ObjectId.)}
+        original-doc {:x "123" :y "abc"}
         result-doc (u/insert dtc original-doc)]
     (testing "property presence"
       (is (not (contains? result-doc :x)))
@@ -62,7 +61,7 @@
 (deftest creating-with-default
   (let [dtc (u/dtc {:x (s/string :mask *f*
                                  :default "!")})
-        original-doc {:x "123" :company-id (ObjectId.)}
+        original-doc {:x "123"}
         result-doc (u/insert dtc original-doc)]
     (is (= "!" (:x result-doc)))))
 
@@ -70,7 +69,7 @@
   (with-redefs [m/update! (spy/spy (fn [_ _ doc] doc))]
     (let [dtc (u/dtc {:x (s/string :mask *f*)
                       :y (s/string)})
-          doc {:x "123" :y "abc" :company-id (ObjectId.)}]
+          doc {:x "123" :y "abc"}]
       @(p/update-in! dtc {} doc)
       (testing "property presence"
         (is (spy/call-matching? m/update!
@@ -94,7 +93,7 @@
                   x inc))
           dtc (u/dtc {:x (s/integer :mask *f*)
                       :y (s/integer :derived dfn)})
-          doc {:x 10 :company-id (ObjectId.)}]
+          doc {:x 10}]
       @(p/update-in! dtc {} doc)
       (testing "property presence"
         (is (spy/call-matching? m/update!

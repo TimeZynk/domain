@@ -2,7 +2,8 @@
   (:require [spy.core :refer [stub]]
             [com.timezynk.domain.core :as dom]
             [com.timezynk.domain.mongo.core :as m]
-            [com.timezynk.domain.persistence :as p]))
+            [com.timezynk.domain.persistence :as p])
+  (:import [org.bson.types ObjectId]))
 
 (defn build-immutable-inmemory-store
   "Builds a fixture which overrides mongo.core functions so that the end result
@@ -30,5 +31,6 @@
 (defn insert
   "Shorthand for inserting `doc` without persisting it."
   [dtc doc]
-  (with-redefs [m/insert! (fn [_ doc] (into [] doc))]
-    (p/->1 dtc (p/conj! doc))))
+  (let [doc (merge {:company-id (ObjectId.)} doc)]
+    (with-redefs [m/insert! (fn [_ doc] (into [] doc))]
+      (p/->1 dtc (p/conj! doc)))))
