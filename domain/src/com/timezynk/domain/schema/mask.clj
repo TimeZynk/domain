@@ -1,4 +1,4 @@
-(ns com.timezynk.domain.mask
+(ns com.timezynk.domain.schema.mask
   "Implementation of DTC property masks.
 
    A property is redacted from the document if the following conditions are met:

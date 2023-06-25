@@ -1,4 +1,4 @@
-(ns com.timezynk.domain.mask.built-in
+(ns com.timezynk.domain.schema.mask.built-in
   "Useful functions for masking DTC properties."
   (:require [com.timezynk.useful.cancan :as ability]
             [com.timezynk.domain.core :as c]))

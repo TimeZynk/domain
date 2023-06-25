@@ -1,7 +1,7 @@
-(ns com.timezynk.domain.mask-test
+(ns com.timezynk.domain.schema.mask-test
   (:require [clojure.test :refer [deftest is testing use-fixtures]]
             [spy.core :as spy]
-            [com.timezynk.domain.mask.utils :as mu]
+            [com.timezynk.domain.schema.mask.utils :as mu]
             [com.timezynk.domain.mongo.core :as m]
             [com.timezynk.domain.persistence :as p]
             [com.timezynk.domain.schema :as s]

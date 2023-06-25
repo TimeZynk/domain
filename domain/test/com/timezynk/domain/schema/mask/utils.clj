@@ -1,4 +1,4 @@
-(ns com.timezynk.domain.mask.utils)
+(ns com.timezynk.domain.schema.mask.utils)
 
 (defn action-matcher [value]
   (fn [[_ _ action _]]
