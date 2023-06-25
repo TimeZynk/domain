@@ -7,7 +7,7 @@
            [org.bson.types ObjectId]))
 
 (deftest integer-str->number
-  (let [dtc (u/dom-type-collection :properties {:x (s/number)})
+  (let [dtc (u/dtc {:x (s/number)})
         out (u/select dtc {:x "1234567890"})
         x-type (type (:x out))]
     (is (not= String x-type))
@@ -15,7 +15,7 @@
     (is (= 1234567890 (:x out)))))
 
 (deftest long-str->number
-  (let [dtc (u/dom-type-collection :properties {:x (s/number)})
+  (let [dtc (u/dtc {:x (s/number)})
         out (u/select dtc {:x "12345678901"})
         x-type (type (:x out))]
     (is (not= String x-type))
@@ -23,7 +23,7 @@
     (is (= 12345678901 (:x out)))))
 
 (deftest bigint-str->number
-  (let [dtc (u/dom-type-collection :properties {:x (s/number)})
+  (let [dtc (u/dtc {:x (s/number)})
         out (u/select dtc {:x "12345678901234567890"})
         x-type (type (:x out))]
     (is (not= String x-type))
@@ -31,7 +31,7 @@
     (is (= 12345678901234567890 (:x out)))))
 
 (deftest float-str->number
-  (let [dtc (u/dom-type-collection :properties {:x (s/number)})
+  (let [dtc (u/dtc {:x (s/number)})
         out (u/select dtc {:x "1.234"})
         x-type (type (:x out))]
     (is (not= String x-type))
@@ -39,7 +39,7 @@
     (is (= (float 1.234) (:x out)))))
 
 (deftest double-str->number
-  (let [dtc (u/dom-type-collection :properties {:x (s/number)})
+  (let [dtc (u/dtc {:x (s/number)})
         out (u/select dtc {:x "1.23456789"})
         x-type (type (:x out))]
     (is (not= String x-type))
@@ -47,7 +47,7 @@
     (is (= 1.23456789 (:x out)))))
 
 (deftest bigdecimal-str->number
-  (let [dtc (u/dom-type-collection :properties {:x (s/number)})
+  (let [dtc (u/dtc {:x (s/number)})
         out (u/select dtc {:x "1.23456789012345678"})
         x-type (type (:x out))]
     (is (not= String x-type))
@@ -55,14 +55,14 @@
     (is (= 1.23456789012345678M (:x out)))))
 
 (deftest not-numeric-str->number
-  (let [dtc (u/dom-type-collection :properties {:x (s/number)})
+  (let [dtc (u/dtc {:x (s/number)})
         in {:x "qwerty"}
         out (u/select dtc in)]
     (is (= String (type (:x out))))
     (is (= (:x in) (:x out)))))
 
 (deftest valid-date-str->date
-  (let [dtc (u/dom-type-collection :properties {:x (s/date)})
+  (let [dtc (u/dtc {:x (s/date)})
         out (u/select dtc {:x "2023-06-22"})
         x-type (type (:x out))]
     (is (not= String x-type))
@@ -70,14 +70,14 @@
     (is (= (LocalDate/of 2023 6 22) (:x out)))))
 
 (deftest not-date-str->number
-  (let [dtc (u/dom-type-collection :properties {:x (s/date)})
+  (let [dtc (u/dtc {:x (s/date)})
         in {:x "qwerty"}
         out (u/select dtc in)]
     (is (= String (type (:x out))))
     (is (= (:x in) (:x out)))))
 
 (deftest valid-datetime-str->datetime
-  (let [dtc (u/dom-type-collection :properties {:x (s/date-time)})
+  (let [dtc (u/dtc {:x (s/date-time)})
         out (u/select dtc {:x "2023-06-22T10:47:32+03:00[Europe/Tallinn]"})
         x-type (type (:x out))]
     (is (not= String x-type))
@@ -86,14 +86,14 @@
            (:x out)))))
 
 (deftest not-datetime-str->datetime
-  (let [dtc (u/dom-type-collection :properties {:x (s/date-time)})
+  (let [dtc (u/dtc {:x (s/date-time)})
         in {:x "qwerty"}
         out (u/select dtc in)]
     (is (= String (type (:x out))))
     (is (= (:x in) (:x out)))))
 
 (deftest valid-objectid-str->objectid
-  (let [dtc (u/dom-type-collection :properties {:x (s/id)})
+  (let [dtc (u/dtc {:x (s/id)})
         in {:x "52dd44373004b346e641112d"}
         out (u/select dtc in)
         x-type (type (:x out))]
@@ -102,7 +102,7 @@
     (is (= (ObjectId. (:x in)) (:x out)))))
 
 (deftest valid-objectid-keyword->objectid
-  (let [dtc (u/dom-type-collection :properties {:x (s/id)})
+  (let [dtc (u/dtc {:x (s/id)})
         in {:x :52dd44373004b346e641112d}
         out (u/select dtc in)
         x-type (type (:x out))]
@@ -111,14 +111,14 @@
     (is (= (um/object-id (:x in)) (:x out)))))
 
 (deftest not-objectid-str->objectid
-  (let [dtc (u/dom-type-collection :properties {:x (s/id)})
+  (let [dtc (u/dtc {:x (s/id)})
         in {:x "qwerty"}
         out (u/select dtc in)]
     (is (= String (type (:x out))))
     (is (= (:x in) (:x out)))))
 
 (deftest integer->boolean
-  (let [dtc (u/dom-type-collection :properties {:x (s/boolean)})]
+  (let [dtc (u/dtc {:x (s/boolean)})]
     (are [in out] (->> {:x in} (u/select dtc) :x (= out))
          123     true
          "false" true
@@ -128,7 +128,7 @@
          -1      true)))
 
 (deftest valid-date-str-within-vector->date
-  (let [dtc (u/dom-type-collection :properties {:x (s/vector (s/date))})
+  (let [dtc (u/dtc {:x (s/vector (s/date))})
         out (u/select dtc {:x ["2023-06-22" "2023-06-23"]})
         x (:x out)
         [date-1 date-2] x]
@@ -138,7 +138,7 @@
     (is (= (LocalDate/of 2023 6 23) date-2))))
 
 (deftest valid-date-str-within-map->date
-  (let [dtc (u/dom-type-collection :properties {:x (s/map {:y (s/date)})})
+  (let [dtc (u/dtc {:x (s/map {:y (s/date)})})
         out (u/select dtc {:x {:y "2023-06-22"}})
         y (get-in out [:x :y])
         type-y (type y)]
@@ -147,7 +147,7 @@
     (is (= (LocalDate/of 2023 6 22) y))))
 
 (deftest valid-date-str-deeply-nested->date
-  (let [dtc (u/dom-type-collection :properties {:x (s/map {:y (s/vector (s/map {:z (s/date)}))})})
+  (let [dtc (u/dtc {:x (s/map {:y (s/vector (s/map {:z (s/date)}))})})
         out (u/select dtc {:x {:y [{:z "2023-06-22"}
                                    {:z "2023-06-23"}]}})
         y (get-in out [:x :y])

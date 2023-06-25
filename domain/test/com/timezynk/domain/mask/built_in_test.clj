@@ -1,6 +1,6 @@
 (ns com.timezynk.domain.mask.built-in-test
-  (:require [clojure.test :refer [deftest is testing compose-fixtures use-fixtures]]
-            [spy.core :refer [stub spy called-n-times? call-matching?]]
+  (:require [clojure.test :refer [deftest is testing use-fixtures]]
+            [spy.core :refer [stub called-n-times? call-matching?]]
             [com.timezynk.domain.core :as c]
             [com.timezynk.domain.mask.built-in :refer [unauthorized?]]
             [com.timezynk.domain.schema :as s]
@@ -10,7 +10,7 @@
             [com.timezynk.domain.utils :as u])
   (:import [org.bson.types ObjectId]))
 
-(def ^:dynamic *dtc*)
+(def ^:dynamic *dtc* nil)
 
 (def ^:const dtc-properties
   {:x (s/string)
@@ -26,7 +26,7 @@
         :z2 "xyz-2"
         :z3 "xyz-3"}}])
 
-(defn- create-dtc [f]
+(defn- with-dtc [f]
   (binding [*dtc* (c/dom-type-collection :name :qwerty
                                          :properties dtc-properties)]
     (f)))
@@ -36,9 +36,9 @@
     (with-redefs [ability/can? (stub false)]
       (f))))
 
-(use-fixtures :each (->> create-dtc
-                         (compose-fixtures (u/build-immutable-inmemory-store records))
-                         (compose-fixtures with-authorization-failure)))
+(use-fixtures :each (u/build-immutable-inmemory-store records)
+                    #'with-dtc
+                    #'with-authorization-failure)
 
 (deftest reading
   (testing "Reading from the store"

@@ -12,12 +12,12 @@
 (def ^:private bad (constantly ERRORS))
 
 (deftest success
-  (let [dtc (u/dom-type-collection :properties {:x (s/number :validate good)})
+  (let [dtc (u/dtc {:x (s/number :validate good)})
         out (u/insert dtc {:x 1 :company-id (ObjectId.)})]
     (is (some? out))))
 
 (deftest failure
-  (let [dtc (u/dom-type-collection :properties {:x (s/number :validate bad)})
+  (let [dtc (u/dtc {:x (s/number :validate bad)})
         f #(u/insert dtc {:x 1 :company-id (ObjectId.)})]
     (is (thrown+? (= :validation-error (:type %))     (f)))
     (is (thrown+? (= :x                (:property %)) (f)))

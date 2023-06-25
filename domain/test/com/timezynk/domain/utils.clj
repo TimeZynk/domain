@@ -17,9 +17,9 @@
                   m/destroy!      (stub {})]
       (f))))
 
-(def dom-type-collection
+(def dtc
   "Shorthand for reducing repetition."
-  (partial dom/dom-type-collection :name :abc))
+  (partial dom/dom-type-collection :name :abc :properties))
 
 (defn select
   "Shorthand for selecting `doc` as if it were persisted."
