@@ -34,7 +34,7 @@
   (let [dtc (u/dtc {:x (s/map {:y (s/number :computed f)}
                               :optional? true)})
         out (u/insert dtc {})]
-    (is (not (contains? out :x)))))
+    (is (= 42 (get-in out [:x :y])))))
 
 (deftest in-vector-of-maps
   (let [dtc (u/dtc {:x (s/vector (s/map {:y (s/number :computed f)}))})

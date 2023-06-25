@@ -190,13 +190,11 @@
 
 (defn collect-computed
   "Collect computed values, for example cached values."
-  [{:keys [properties]} doc]
-  (update-leafs-via-directive properties
-                              (walk-schema-with-stop :computed)
-                              doc
-                              (fn [_ prop-spec _v doc]
-                                (when-let [compute-fn (get prop-spec :computed)]
-                                  (compute-fn doc)))))
+  [dtc doc]
+  (sw/update-properties doc (:properties dtc) (fn [subdoc k spec]
+                                                (let [f (:computed spec)]
+                                                  (cond-> subdoc
+                                                    f (assoc k (f doc)))))))
 
 (defn cleanup-internal
   "Remove internal attributes"
