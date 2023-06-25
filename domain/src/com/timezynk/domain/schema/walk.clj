@@ -1,60 +1,44 @@
-(ns com.timezynk.domain.schema.walk
-  (:require [clojure.walk :as w]))
+(ns com.timezynk.domain.schema.walk)
 
-(defn- pairmaker [spec]
-  #(hash-map :value % :spec spec))
-
-(defmulti zipper
-  "Builds a function which takes a single argument: a domain document.
-   The function \"zips\" the document with `schema`, i.e. decorates each of its
-   values with the corresponding property definition."
+(defmulti editor
   {:private true}
-  (fn [schema] (get schema :type :top-level)))
+  (fn [schema _] (:type schema)))
 
-(defmethod zipper :top-level
-  [schema]
-  (fn [doc]
-    (->> schema
-         (filter #(contains? doc (key %)))
-         (reduce-kv (fn [acc k v]
-                      (update acc k (comp (pairmaker v) (zipper v))))
-                    doc))))
+(defn- bound-editor [schema f]
+  (let [edit (editor schema f)]
+    (fn [subdoc k]
+      (-> subdoc
+          (edit k)
+          (f k schema)))))
 
-(defmethod zipper :vector
-  [schema]
-  (let [wrap (fn [x] {:_ x})
-        unwrap :_
-        zip (zipper {:_ (:children schema)})]
-    (fn [doc]
-      (mapv (comp unwrap zip wrap) doc))))
+(defmethod editor :vector
+  [schema f]
+  (fn [subdoc k]
+    (let [edit (bound-editor (:children schema) f)
+          before (get subdoc k)
+          after (for [i (range (count before))]
+                  (-> before (edit i) (get i)))]
+      (cond-> subdoc
+        (seq after) (assoc k (into [] after))))))
 
-(defmethod zipper :map
-  [schema]
-  (fn [doc]
-    (let [zip (zipper (:properties schema))]
-      (zip doc))))
+(defmethod editor :map
+  [schema f]
+  (fn [subdoc k]
+    (let [before (get subdoc k)
+          after (reduce-kv (fn [acc k v] ((bound-editor v f) acc k))
+                           before
+                           (:properties schema))]
+      (cond-> subdoc
+        after (assoc k after)))))
 
-(defmethod zipper :default
-  [_]
-  identity)
-
-(defn- pair? [x]
-  (and (map? x)
-       (contains? x :value)
-       (contains? x :spec)))
-
-(defn- unzipper [update-fn]
-  (fn [doc]
-    (w/postwalk #(if (pair? %)
-                   (update-fn (:value %) (:spec %))
-                   %)
-                doc)))
+(defmethod editor :default
+  [_ _]
+  (fn [subdoc _]
+    subdoc))
 
 (defn update-properties
-  "Replaces each value `v` in `doc` with the result of `(update-fn v s)`, where:
-    * `v` is the value associated with property `k`
-    * `s` is the definition of property `k`"
-  [doc schema update-fn]
-  (let [zip (zipper schema)
-        unzip (unzipper update-fn)]
-    (->> doc zip unzip)))
+  [doc schema f]
+  (reduce-kv (fn [acc k v]
+               ((bound-editor v f) acc k))
+             doc
+             schema))

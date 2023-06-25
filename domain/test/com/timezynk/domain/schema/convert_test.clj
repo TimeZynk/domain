@@ -149,7 +149,7 @@
 (deftest valid-date-str-deeply-nested->date
   (let [dtc (u/dom-type-collection :properties {:x (s/map {:y (s/vector (s/map {:z (s/date)}))})})
         out (u/select dtc {:x {:y [{:z "2023-06-22"}
-                                 {:z "2023-06-23"}]}})
+                                   {:z "2023-06-23"}]}})
         y (get-in out [:x :y])
         [y-1 y-2] y]
     (is (not-any? (comp #{String} type :z) y))

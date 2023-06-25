@@ -155,27 +155,27 @@
   [dtc doc]
   (sw/update-properties doc
                         (:properties dtc)
-                        (fn [value property-definition]
-                          (let [f (:validate property-definition)
-                                errors (and (fn? f) (f value doc))]
-                              (when errors
-                                (throw+ {:type :validation-error
-                                         :property :x
-                                         :errors errors}))
-                              value))))
+                        (fn [subdoc k spec]
+                          (let [f (:validate spec)
+                                errors (and (fn? f) (f (get subdoc k) doc))]
+                            (when errors
+                              (throw+ {:type :validation-error
+                                       :property k
+                                       :errors errors}))
+                            subdoc))))
 
 (defn add-default-values
   "Like add-derived-values, but only when the doc is created"
-  [{:keys [properties]} doc]
-  (update-leafs-via-directive properties
-                              (walk-schema-with-stop :default)
-                              doc
-                              (fn [_ prop-spec v doc]
-                                (when (nil? v)
-                                  (let [default-fn (get prop-spec :default)]
-                                    (if (fn? default-fn)
-                                      (default-fn doc)
-                                      default-fn))))))
+  [dtc doc]
+  (sw/update-properties doc
+                        (:properties dtc)
+                        (fn [subdoc k spec]
+                          (if (or (not (contains? spec :default))
+                                  (contains? subdoc k))
+                            subdoc
+                            (let [hook (:default spec)
+                                  value (if (fn? hook) (hook doc) hook)]
+                              (assoc subdoc k value))))))
 
 (defn add-derived-values
   "Add values derived from other doc values."
@@ -207,7 +207,11 @@
   "Convert incoming type to expected type for all properties, if possible.
    Otherwise, do nothing."
   [dtc doc]
-  (sw/update-properties doc (:properties dtc) convert/nudge))
+  (sw/update-properties doc
+                        (:properties dtc)
+                        (fn [subdoc k spec]
+                          (cond-> subdoc
+                            (contains? subdoc k) (update k convert/nudge spec)))))
 
 (defn- handle-ref-resources [properties intention doc]
   (r/reduce (fn [acc k v]
