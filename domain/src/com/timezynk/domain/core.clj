@@ -162,7 +162,8 @@
                             subdoc
                             (let [hook (:default spec)
                                   value (if (fn? hook) (hook doc) hook)]
-                              (assoc subdoc k value))))))
+                              (cond-> subdoc
+                                value (assoc k value)))))))
 
 (defn add-derived-values
   "Add values derived from other doc values."
@@ -171,17 +172,21 @@
     (sw/update-properties doc
                           (:properties dtc)
                           (fn [subdoc k spec]
-                            (let [f (:derived spec)]
+                            (let [f (:derived spec)
+                                  value (and (fn? f) (f doc is-update?))]
                               (cond-> subdoc
-                                f (assoc k (f doc is-update?))))))))
+                                value (assoc k value)))))))
 
 (defn collect-computed
   "Collect computed values, for example cached values."
   [dtc doc]
-  (sw/update-properties doc (:properties dtc) (fn [subdoc k spec]
-                                                (let [f (:computed spec)]
-                                                  (cond-> subdoc
-                                                    f (assoc k (f doc)))))))
+  (sw/update-properties doc
+                        (:properties dtc)
+                        (fn [subdoc k spec]
+                          (let [f (:computed spec)
+                                value (and (fn? f) (f doc))]
+                            (cond-> subdoc
+                              value (assoc k value))))))
 
 (defn cleanup-internal
   "Remove internal attributes"
