@@ -102,19 +102,27 @@
                   :old oldies)
       newlings)))
 
+(defn- execution-id
+  "Generates random integers so two or more process minimize risk of collision."
+  []
+  (rand-int 1000000000))
+
 (defn update! [cname restriction new-doc]
   (mongo/with-mongo @db
     (let [now         (System/currentTimeMillis)
+          lock        {:valid-to now
+                       :lock-id (execution-id)}
           restriction (postwalk-replace ids-in restriction)
+          uniq-query  (merge restriction lock)
           _           (mongo/update! cname
                                      (assoc restriction :valid-to nil)
-                                     {:$set {:valid-to now}}
+                                     {:$set lock}
                                      :multiple true
                                      :upsert false)
-          oldies      (get-old-docs cname (assoc restriction :valid-to now))
+          oldies      (get-old-docs cname uniq-query)
           company-id  (get (first oldies) :company-id)
           new-doc     (dissoc (rename-ids-in new-doc) :_id :_pid)
-          create-new  (fn [old] (-> (dissoc old :_id)
+          create-new  (fn [old] (-> (dissoc old :_id :lock-id)
                                     (merge new-doc)
                                     (assoc :valid-from now
                                            :valid-to nil
@@ -132,7 +140,7 @@
                                         :oldies oldies
                                         :tstamp now
                                         :user-id (or (current-session/user-id) (:changed-by new-doc))}))
-          _           (mongo/destroy! cname (assoc restriction :valid-to now))
+          _           (mongo/destroy! cname uniq-query)
           newlings    (map rename-ids-out newlings)
           oldies      (map rename-ids-out oldies)]
 
