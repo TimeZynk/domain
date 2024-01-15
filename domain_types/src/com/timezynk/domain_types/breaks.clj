@@ -17,9 +17,9 @@
   (if (and (:start doc) (:end doc))
     doc
     (let [vid (or (:vid doc) (-> dtc :collection :restriction :vid))]
-      (when vid
-        (->> (p/by-vid dtc vid)
-             (pack/pack-doc dtc))))))
+      (some->> vid
+               (p/by-vid dtc)
+               (pack/pack-doc dtc)))))
 
 (defn validate-breaks! [dtc doc]
   (let [{:keys [start end breaks]} (use-or-load dtc doc)]
