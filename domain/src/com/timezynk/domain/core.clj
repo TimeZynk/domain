@@ -404,13 +404,16 @@
                     (let [dom-type-collection (if pre-process-dtc
                                                 (pre-process-dtc :index dom-type-collection req)
                                                 dom-type-collection)
-                          restriction         (pack/pack-query dom-type-collection req)
+                          dtc-name            (get-dtc-name dom-type-collection)
+                          restriction         (->> req
+                                                   (pack/pack-query dom-type-collection)
+                                                   (ability/downscope :index dtc-name))
                           collects            (pack/pack-collects dom-type-collection req)]
                       (-> (p/select dom-type-collection restriction collects)
                           (authorize-station (fn [dtc doc]
                                                (ability/authorize!
                                                 :index
-                                                (get-dtc-name dom-type-collection)
+                                                dtc-name
                                                 (get-in dtc [:collection :restriction]))
                                                doc))
                           (add-stations* index)
