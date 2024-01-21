@@ -10,7 +10,7 @@
    [com.timezynk.domain.schema :as s]
    [com.timezynk.domain.update-leafs :refer [update-leafs-via-directive]]
    [com.timezynk.domain.validation :as v]
-   [com.timezynk.useful.cancan :as ability]
+   [com.timezynk.cancancan.core :as ability]
    [com.timezynk.useful.date :as date]
    [com.timezynk.useful.rest :refer [json-response etag-response]]
    [compojure.core :refer [routes GET POST PUT PATCH DELETE]]

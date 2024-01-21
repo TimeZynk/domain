@@ -1,6 +1,6 @@
 (ns com.timezynk.domain.mask.built-in
   "Useful functions for masking DTC properties."
-  (:require [com.timezynk.useful.cancan :as ability]
+  (:require [com.timezynk.cancancan.core :as ability]
             [com.timezynk.domain.core :as c]))
 
 (defn unauthorized?
