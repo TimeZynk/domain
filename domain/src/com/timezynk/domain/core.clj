@@ -10,7 +10,7 @@
    [com.timezynk.domain.schema :as s]
    [com.timezynk.domain.update-leafs :refer [update-leafs-via-directive]]
    [com.timezynk.domain.validation :as v]
-   [com.timezynk.useful.cancan :as ability]
+   [com.timezynk.cancancan.core :as ability]
    [com.timezynk.useful.date :as date]
    [com.timezynk.useful.rest :refer [json-response etag-response]]
    [compojure.core :refer [routes GET POST PUT PATCH DELETE]]
@@ -404,13 +404,16 @@
                     (let [dom-type-collection (if pre-process-dtc
                                                 (pre-process-dtc :index dom-type-collection req)
                                                 dom-type-collection)
-                          restriction         (pack/pack-query dom-type-collection req)
+                          dtc-name            (get-dtc-name dom-type-collection)
+                          restriction         (->> req
+                                                   (pack/pack-query dom-type-collection)
+                                                   (ability/downscope :index dtc-name))
                           collects            (pack/pack-collects dom-type-collection req)]
                       (-> (p/select dom-type-collection restriction collects)
                           (authorize-station (fn [dtc doc]
                                                (ability/authorize!
                                                 :index
-                                                (get-dtc-name dom-type-collection)
+                                                dtc-name
                                                 (get-in dtc [:collection :restriction]))
                                                doc))
                           (add-stations* index)
