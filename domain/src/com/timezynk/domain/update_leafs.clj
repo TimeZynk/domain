@@ -27,7 +27,8 @@
 (defn update-leafs
   "Recursive update on leafs in sequences and maps"
   [x fun & args]
-  (apply update-leafs* () x fun args))
+  (when x
+    (apply update-leafs* () x fun args)))
 
 
                                         ; With Directives
