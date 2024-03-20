@@ -10,10 +10,19 @@
   (disj! [this] [this predicate])
   (update-in! [this] [this predicate] [this predicate record]))
 
-(defmacro ->1 [& steps]
-  `(-> ~@steps
+(defmacro ->1 [dtc op & rest]
+  `(-> ~dtc
+       ~op
        deref
-       first))
+       first
+       ~@rest))
+
+(defmacro ->>1 [dtc op & rest]
+  `(->> (-> ~dtc
+            ~op
+            deref
+            first)
+        ~@rest))
 
 (defmacro ->! [& steps]
   `(-> ~@steps
