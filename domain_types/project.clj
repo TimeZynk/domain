@@ -4,7 +4,7 @@
   :license {:name "BSD 3 Clause"
             :url "https://opensource.org/licenses/BSD-3-Clause"}
   :dependencies [[com.timezynk/domain "2.2.7"]
-                 [com.timezynk/useful "2.7.0" :scope "dev"]
+                 [com.timezynk/useful "2.7.1" :scope "dev"]
                  [congomongo "2.6.0" :scope "provided"]
                  [org.clojure/clojure "1.11.1" :scope "provided"]
                  [slingshot "0.12.2"]]
