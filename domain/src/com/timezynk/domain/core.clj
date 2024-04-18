@@ -11,12 +11,17 @@
    [com.timezynk.domain.update-leafs :refer [update-leafs-via-directive]]
    [com.timezynk.domain.validation :as v]
    [com.timezynk.cancancan.core :as ability]
+   [com.timezynk.mongo :as mongo2]
+   [com.timezynk.mongo.hooks :as mh]
+   [com.timezynk.mongo.schema :as ms]
    [com.timezynk.useful.date :as date]
    [com.timezynk.useful.rest :refer [json-response etag-response]]
+   [com.timezynk.useful.rest.current-user :as current-session]
    [compojure.core :refer [routes GET POST PUT PATCH DELETE]]
    [slingshot.slingshot :refer [throw+]]
    clojure.string)
-  (:import [org.joda.time DateTime]))
+  (:import [org.bson.types ObjectId]
+           [org.joda.time DateTime]))
 
 
                                         ;Aliases
@@ -112,9 +117,9 @@
 (defn validate-id-availability [dtc doc]
   (let [docs (if (map? doc) [doc] doc)
         ids (as-> docs v
-                  (r/map :id v)
-                  (into #{} v)
-                  (disj v nil))]
+              (r/map :id v)
+              (into #{} v)
+              (disj v nil))]
 
     (when (and (seq ids) (pos? @(m/select-count (:collection dtc) {:id {:$in ids}})))
       (throw+ {:code 409
@@ -593,3 +598,100 @@
                           deref
                           json-response))))))))))
 
+                                        ; New persistence layer
+
+(defmacro convert-ids
+  "Convert field names of ids"
+  [& body]
+  `(mh/with-hooks {:read  m/rename-ids-out
+                   :write m/rename-ids-in}
+     ~@body))
+
+(defn default-schema [s]
+  (assoc s
+         :id         (ms/id)
+         :company-id (ms/id)
+         :created    (ms/timestamp)
+         :created-by (ms/id        :optional? true)
+         :changed    (ms/timestamp :optional? true)
+         :changed-by (ms/id        :optional? true)
+         :valid-from (ms/timestamp :optional? true)
+         :valid-to   (ms/timestamp :optional? true)))
+
+(defn default-values [m]
+  (merge {:id         (ObjectId.)
+          :company-id (current-session/company-id)
+          :created    (System/currentTimeMillis)
+          :created-by (current-session/user-id)}
+         m
+         {:valid-from (System/currentTimeMillis)
+          ;; :valid-to   nil
+          }))
+
+(defrecord MongoPlan [execution]
+  clojure.lang.IDeref
+  (deref [this]
+    (convert-ids
+     ((:execution this)))))
+
+(defrecord NewDomainCollection [name skip-logging sort-by version]
+  p/Persistence
+  (create-collection! [dtc schema]
+    (->MongoPlan
+     #(let [res (mongo2/create-collection! (collection-name dtc)
+                                           :schema (default-schema schema))]
+        (mongo2/create-index! name {:id "hashed"})
+        res)))
+
+  (create-index! [dtc schema]
+    (->MongoPlan
+     #(mongo2/create-index! (collection-name dtc) schema :background? true)))
+
+  (select [this]
+    (p/select this {}))
+
+  (select [{:keys [sort-by] :as dtc} query]
+    (->MongoPlan
+     #(mongo2/fetch (collection-name dtc) query :sort sort-by)))
+
+  (select-one [this]
+    (p/select-one this {}))
+
+  (select-one [{:keys [sort-by] :as dtc} query]
+    (->MongoPlan
+     #(mongo2/fetch-one (collection-name dtc) query :sort sort-by)))
+
+  (select-count [this]
+    (p/select-count this {}))
+
+  (select-count [{:keys [sort-by] :as dtc} query]
+    (->MongoPlan
+     #(mongo2/fetch-count (collection-name dtc) query :sort sort-by)))
+
+  (conj! [{:keys [skip-logging] :as dtc} docs]
+    (let [docs (cond (map? docs)  [docs]
+                     (coll? docs)  docs)]
+      (->MongoPlan
+       #(mongo2/insert! (collection-name dtc)
+                        (map (fn [v] (default-values v))
+                             docs)
+                        :watch? (not skip-logging)))))
+
+  (update-in! [{:keys [skip-logging] :as dtc} query doc]
+    (->MongoPlan
+     #(mongo2/set! (collection-name dtc)
+                   query
+                   (merge {:changed (System/currentTimeMillis)
+                           :changed-by (current-session/user-id)}
+                          doc)
+                   :watch? (not skip-logging))))
+
+  (disj! [{:keys [skip-logging] :as dtc} query]
+    (->MongoPlan
+     #(mongo2/delete! (collection-name dtc)
+                      query
+                      :watch? (not skip-logging)))))
+
+(defn new-dom-collection [& {:keys [name] :as options}]
+  {:pre [name]}
+  (map->NewDomainCollection options))

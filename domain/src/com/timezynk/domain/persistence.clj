@@ -4,7 +4,10 @@
             [com.timezynk.useful.mongo :as um]))
 
 (defprotocol Persistence
+  (create-collection! [this schema])
+  (create-index! [this schema])
   (select [this] [this predicate] [this predicate collects])
+  (select-one [this] [this predicate])
   (select-count [this] [this predicate])
   (conj! [this] [this records])
   (disj! [this] [this predicate])
