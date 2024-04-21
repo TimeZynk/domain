@@ -1,7 +1,5 @@
 (ns com.timezynk.domain.mongo.channel.hook
-  (:require [somnium.congomongo :as mongo]
-            [com.timezynk.useful.channel.subscriber.hook :refer [Hook]]
-            [com.timezynk.useful.mongo.db :refer [db]]
+  (:require [com.timezynk.useful.channel.subscriber.hook :refer [Hook]]
             [com.timezynk.useful.prometheus.core :as metrics]
             [com.timezynk.domain.context :as context]))
 
@@ -16,17 +14,16 @@
   Hook
 
   (call [this topic cname context message]
-    (mongo/with-mongo @db
-      (let [fn-name (->str this)
-            [new-doc old-doc] message
-            start-at (System/nanoTime)
-            current-request (or context/*request* {:id context})
-            _ (binding [context/*request* current-request]
-                (f topic cname new-doc old-doc))
-            end-at (System/nanoTime)]
-        (metrics/inc-by! handler-time
-                         (/ (double (- end-at start-at)) 1000000000.0)
-                         fn-name))))
+    (let [fn-name (->str this)
+          [new-doc old-doc] message
+          start-at (System/nanoTime)
+          current-request (or context/*request* {:id context})
+          _ (binding [context/*request* current-request]
+              (f topic cname new-doc old-doc))
+          end-at (System/nanoTime)]
+      (metrics/inc-by! handler-time
+                       (/ (double (- end-at start-at)) 1000000000.0)
+                       fn-name)))
 
   (pretty-print [this]
     (->str this))

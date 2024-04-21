@@ -3,7 +3,7 @@
    [clojure.tools.logging :as log]
    [com.timezynk.domain.migrations.collection-header :as h]
    ; [com.timezynk.domain.core :as dom]
-   [somnium.congomongo :as mongo]))
+   [com.timezynk.mongo :as mongo2]))
 
 (defn time-info [t-name company-name label f & args]
   (let [ts  (System/currentTimeMillis)
@@ -31,7 +31,7 @@
   (bound-fn []
     (loop [{:keys [company-id]} (.poll companies)]
       (when company-id
-        (when-let [company (mongo/fetch-by-id :companies company-id :only [:name])]
+        (when-let [company (mongo2/fetch-by-id :companies company-id :only [:name])]
           (try
             (log/info (.getName (Thread/currentThread)) "start migration for company #"
                       (company-counter) ":" (:name company) "(" (str (:_id company)) ") left to go:"
@@ -52,7 +52,7 @@
 
 (defn- build-companies-queue []
   (java.util.concurrent.ConcurrentLinkedQueue.
-   (->> (mongo/fetch :companies :only [:_id])
+   (->> (mongo2/fetch :companies :only [:_id])
         (map (fn [company] {:company-id (:_id company)})))))
 
 (defn docompanies
@@ -91,11 +91,6 @@
             (log/info "migration" migr-name "did not finish")))
         (catch Exception e
           (log/error e "Migration failed"))))))
-
-(defn migration-wrapper [migr]
-  (fn [db]
-    (mongo/with-mongo db
-      (migr))))
 
                                         ; memory database
 

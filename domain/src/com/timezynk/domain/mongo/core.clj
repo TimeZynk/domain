@@ -3,14 +3,14 @@
   (:refer-clojure :exclude [compile conj! disj!])
   (:require
    [clojure.core.reducers :as r]
+   clojure.pprint
    [clojure.set :refer [rename-keys]]
    [clojure.walk :refer [postwalk-replace]]
    [com.timezynk.domain.mongo.channel :as mchan]
+   com.timezynk.domain.mongo.predicates
+   [com.timezynk.mongo :as mongo2]
    [com.timezynk.useful.mongo :as um]
-   [com.timezynk.useful.mongo.db :refer [db]]
-   [com.timezynk.useful.rest.current-user :as current-session]
-   [somnium.congomongo :as mongo]
-   com.timezynk.domain.mongo.predicates)
+   [com.timezynk.useful.rest.current-user :as current-session])
   (:import [org.bson.types ObjectId]))
 
 
@@ -62,45 +62,41 @@
           :valid-to   nil}))
 
 (defn insert! [cname new]
-  (mongo/with-mongo @db
-    (let [new (->> new
-                   (r/map rename-ids-in)
-                   (r/map set-default-values)
-                   (into []))
-          new (if (seq new) (mongo/insert! cname new :many true) [])
-          new (map rename-ids-out new)]
+  (let [new (->> new
+                 (r/map rename-ids-in)
+                 (r/map set-default-values)
+                 (into []))
+        new (mongo2/insert! cname new)
+        new (map rename-ids-out new)]
       ; (debug (.getName (Thread/currentThread)) "insert! completed for" cname)
-      (mchan/put! :insert
-                  cname
-                  :new new)
+    (mchan/put! :insert
+                cname
+                :new new)
       ; (debug (.getName (Thread/currentThread)) "insert! mchan/put! completed for" cname)
-      new)))
+    new))
 
 (defn- get-old-docs [cname restriction]
-  (let [oldies (mongo/fetch cname :where restriction)]
+  (let [oldies (mongo2/fetch cname restriction)]
     (if (sequential? oldies) oldies [oldies])))
 
 (defn update-fast! [cname restriction new-doc]
-  (mongo/with-mongo @db
-    (let [now         (System/currentTimeMillis)
-          restriction (postwalk-replace ids-in restriction)
-          oldies      (get-old-docs cname (assoc restriction :valid-to nil))
-          ids         (map :_id oldies)
-          new-doc     (dissoc (rename-ids-in new-doc) :_id :_pid :_name)
-          new-doc     (assoc new-doc :valid-from now :valid-to nil)
-          _           (mongo/update! cname
-                                     {:_id {:$in ids}}
-                                     {:$set new-doc}
-                                     :multiple true
-                                     :upsert false)
-          newlings    (map (fn [d] (merge d new-doc)) oldies)
-          newlings    (map rename-ids-out newlings)
-          oldies      (map rename-ids-out oldies)]
-      (mchan/put! :update
-                  cname
-                  :new newlings
-                  :old oldies)
-      newlings)))
+  (let [now         (System/currentTimeMillis)
+        restriction (postwalk-replace ids-in restriction)
+        oldies      (get-old-docs cname (assoc restriction :valid-to nil))
+        ids         (map :_id oldies)
+        new-doc     (dissoc (rename-ids-in new-doc) :_id :_pid :_name)
+        new-doc     (assoc new-doc :valid-from now :valid-to nil)
+        _           (mongo2/set! cname
+                                 {:_id {:$in ids}}
+                                 new-doc)
+        newlings    (map (fn [d] (merge d new-doc)) oldies)
+        newlings    (map rename-ids-out newlings)
+        oldies      (map rename-ids-out oldies)]
+    (mchan/put! :update
+                cname
+                :new newlings
+                :old oldies)
+    newlings))
 
 (defn- execution-id
   "Generates random integers so two or more process minimize risk of collision."
@@ -108,117 +104,107 @@
   (rand-int 1000000000))
 
 (defn update! [cname restriction new-doc]
-  (mongo/with-mongo @db
-    (let [now         (System/currentTimeMillis)
-          lock        {:valid-to now
-                       :lock-id (execution-id)}
-          restriction (postwalk-replace ids-in restriction)
-          uniq-query  (merge restriction lock)
-          _           (mongo/update! cname
-                                     (assoc restriction :valid-to nil)
-                                     {:$set lock}
-                                     :multiple true
-                                     :upsert false)
-          oldies      (get-old-docs cname uniq-query)
-          company-id  (get (first oldies) :company-id)
-          new-doc     (dissoc (rename-ids-in new-doc) :_id :_pid)
-          create-new  (fn [old] (-> (dissoc old :_id :lock-id)
-                                    (merge new-doc)
-                                    (assoc :valid-from now
-                                           :valid-to nil
-                                           :_pid (:_id old))))
-          newlings    (map create-new oldies)
-          newlings    (when (seq newlings)
-                        (mongo/insert! cname
-                                       newlings
-                                       :many true))
-          _           (when (seq oldies)
-                        (mongo/insert! :domainlog
-                                       {:type :update
-                                        :company-id company-id
-                                        :collection (name cname)
-                                        :oldies oldies
-                                        :tstamp now
-                                        :user-id (or (current-session/user-id) (:changed-by new-doc))}))
-          _           (mongo/destroy! cname uniq-query)
-          newlings    (map rename-ids-out newlings)
-          oldies      (map rename-ids-out oldies)]
+  (let [now         (System/currentTimeMillis)
+        lock        {:valid-to now
+                     :lock-id (execution-id)}
+        restriction (postwalk-replace ids-in restriction)
+        uniq-query  (merge restriction lock)
+        _           (mongo2/set! cname
+                                 (assoc restriction :valid-to nil)
+                                 lock)
+        oldies      (get-old-docs cname uniq-query)
+        company-id  (get (first oldies) :company-id)
+        new-doc     (dissoc (rename-ids-in new-doc) :_id :_pid)
+        create-new  (fn [old] (-> (dissoc old :_id :lock-id)
+                                  (merge new-doc)
+                                  (assoc :valid-from now
+                                         :valid-to nil
+                                         :_pid (:_id old))))
+        newlings    (map create-new oldies)
+        newlings    (when (seq newlings)
+                      (mongo2/insert! cname
+                                      newlings))
+        _           (when (seq oldies)
+                      (mongo2/insert! :domainlog
+                                      {:type :update
+                                       :company-id company-id
+                                       :collection (name cname)
+                                       :oldies oldies
+                                       :tstamp now
+                                       :user-id (or (current-session/user-id) (:changed-by new-doc))}))
+        _           (mongo2/delete! cname uniq-query)
+        newlings    (map rename-ids-out newlings)
+        oldies      (map rename-ids-out oldies)]
 
       ; (debug (.getName (Thread/currentThread)) "update! completed for" cname)
 
 
-      (mchan/put! :update
-                  cname
-                  :new newlings
-                  :old oldies)
+    (mchan/put! :update
+                cname
+                :new newlings
+                :old oldies)
       ; (debug (.getName (Thread/currentThread)) "update! mchan/put! completed for" cname)
-      newlings)))
+    newlings))
 
 (defn destroy-fast! [cname restriction]
-  (mongo/with-mongo @db
-    (let [restriction (postwalk-replace ids-in restriction)
-          oldies      (get-old-docs cname (assoc restriction :valid-to nil))
-          ids         (map :_id oldies)
-          result      (mongo/destroy! cname {:_id {:$in ids}})
-          deleted-by  (current-session/user-id)
-          oldies      (map rename-ids-out
-                           (map
-                            (fn [o] (assoc o :deleted-by deleted-by))
-                            oldies))]
-      (mchan/put! :delete
-                  cname
-                  :old oldies)
-      {:deleted-no (.getN result)})))
+  (let [restriction (postwalk-replace ids-in restriction)
+        oldies      (get-old-docs cname (assoc restriction :valid-to nil))
+        ids         (map :_id oldies)
+        result      (mongo2/delete! cname {:_id {:$in ids}})
+        deleted-by  (current-session/user-id)
+        oldies      (map rename-ids-out
+                         (map
+                          (fn [o] (assoc o :deleted-by deleted-by))
+                          oldies))]
+    (mchan/put! :delete
+                cname
+                :old oldies)
+    {:deleted-no (.getN result)}))
 
 (defn- destroy! [cname restriction]
-  (mongo/with-mongo @db
-    (let [now         (System/currentTimeMillis)
-          query       (->> restriction
-                           (postwalk-replace ids-in)
-                           (merge {:valid-to nil}))
-          deleted-by  (current-session/user-id)
-          result      (mongo/update! cname
-                                     query
-                                     {:$set {:valid-to now :deleted-by deleted-by}}
-                                     :multiple true
-                                     :upsert false)
-          deleted     (mongo/fetch cname
-                                   :where (assoc query :valid-to now))
-          company-id  (get (first deleted) :company-id)
-          _           (when (seq deleted)
-                        (mongo/insert! :domainlog
-                                       {:type :delete
-                                        :company-id company-id
-                                        :collection (name cname)
-                                        :oldies deleted
-                                        :tstamp now
-                                        :user-id deleted-by}))
-          _           (mongo/destroy! cname (assoc query :valid-to now))]
+  (let [now         (System/currentTimeMillis)
+        query       (->> restriction
+                         (postwalk-replace ids-in)
+                         (merge {:valid-to nil}))
+        deleted-by  (current-session/user-id)
+        result      (mongo2/set! cname
+                                 query
+                                 {:valid-to now :deleted-by deleted-by})
+        deleted     (mongo2/fetch cname
+                                  (assoc query :valid-to now))
+        company-id  (get (first deleted) :company-id)
+        _           (when (seq deleted)
+                      (mongo2/insert! :domainlog
+                                      {:type :delete
+                                       :company-id company-id
+                                       :collection (name cname)
+                                       :oldies deleted
+                                       :tstamp now
+                                       :user-id deleted-by}))
+        _           (mongo2/delete! cname (assoc query :valid-to now))]
       ; (debug (.getName (Thread/currentThread)) "destroy! completed for" cname)
-      (mchan/put! :delete
-                  cname
-                  :old (map rename-ids-out deleted))
+    (mchan/put! :delete
+                cname
+                :old (map rename-ids-out deleted))
       ; (debug (.getName (Thread/currentThread)) "destroy! mchan/put! completed for" cname)
-      {:deleted-no (.getN result)})))
+    {:deleted-no (:deleted-count result)}))
 
 (defn- fetch [cname restriction & options]
-  (mongo/with-mongo @db
-    (->>
-     (apply mongo/fetch
-            cname
-            :where (->> restriction
-                        (postwalk-replace ids-in)
-                        (merge (when-not (:vid restriction) {:valid-to nil})))
-            :sort {:_id 1}
-            options)
-     (map rename-ids-out))))
+  (->>
+   (apply mongo2/fetch
+          cname
+          (->> restriction
+               (postwalk-replace ids-in)
+               (merge (when-not (:vid restriction) {:valid-to nil})))
+          :sort {:_id 1}
+          options)
+   (map rename-ids-out)))
 
 (defn- fetch-count [cname restriction]
-  (mongo/with-mongo @db
-    (mongo/fetch-count cname
-                       :where (->> restriction
-                                   (postwalk-replace ids-in)
-                                   (merge (when-not (:vid restriction) {:valid-to nil}))))))
+  (mongo2/fetch-count cname
+                      (->> restriction
+                           (postwalk-replace ids-in)
+                           (merge (when-not (:vid restriction) {:valid-to nil})))))
 
 (defn add-change-meta [log-info o]
   (assoc o :log-info log-info))
@@ -277,19 +263,17 @@
   ([cname params]
    (fetch-log cname params
               (rename-ids-out
-               (mongo/fetch-one cname :where {:_name (:id params) :valid-to nil}))))
+               (mongo2/fetch-one cname {:_name (:id params) :valid-to nil}))))
   ([cname {:keys [id company-id booked-users]} latest]
-   (let [id (um/object-id id)
-         completed (um/object-id company-id)]
-     (->> (mongo/fetch :domainlog
-                       :where (merge
-                               {:collection (name cname)
-                                :oldies._name id
-                                :company-id company-id}
-                               (when booked-users
-                                 {:oldies.booked-users (um/object-id booked-users)}))
-                       :sort {:tstamp 1}
-                       :hint "oldies._name_1")
+   (let [id (um/object-id id)]
+     (->> (mongo2/fetch :domainlog
+                        (merge
+                         {:collection (name cname)
+                          :oldies._name id
+                          :company-id company-id}
+                         (when booked-users
+                           {:oldies.booked-users (um/object-id booked-users)}))
+                        :sort {:tstamp 1})
           (r/mapcat add-change-metas)
           (r/filter (fn [d] (and (= (:_name d) id) (= (:company-id d) company-id))))
           (r/map rename-ids-out)
@@ -312,7 +296,7 @@
                             update-fn! destroy-fn!]
 
   clojure.lang.IDeref
-  (deref [this]
+  (deref [_this]
     (if query-result
       query-result
       (fetch cname restriction)))
