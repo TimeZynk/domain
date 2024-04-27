@@ -12,9 +12,13 @@
 
 (def ^:const NUM_BROADCAST_WORKERS 2)
 
+(def ^:const NUM_PERSISTED_WORKERS 2)
+
 (defonce request-response (atom nil))
 
 (defonce broadcast (atom nil))
+
+(defonce persisted (atom nil))
 
 (defn put! [topic cname & {:keys [new old context]}]
   (when (and topic cname (or (seq new) (seq old)))
@@ -29,7 +33,9 @@
              (bus/publish @request-response context topic cname)
              (bus/wait-for WAIT_TIMEOUT)))
       (when @broadcast
-        (bus/publish @broadcast context topic cname messages)))))
+        (bus/publish @broadcast context topic cname messages))
+      (when @persisted
+        (bus/publish @persisted context topic cname messages)))))
 
 (defn subscribe
   "Add new request response subscriber to topic. Wait until response is sent before next message is sent.
@@ -50,6 +56,16 @@
                  collection-name
                  (->PerformanceTrackingHook f)))
 
+(defn subscribe-persisted
+  "Adds `f` as subscriber to `topic`. Persists messages in the database
+   and manages them by means of a MongoDB queue.
+   `topic` may a scalar value or a collection."
+  [topic collection-name f]
+  (bus/subscribe @persisted
+                 topic
+                 collection-name
+                 (->PerformanceTrackingHook f)))
+
 (defn unsubscribe-all []
   (bus/unsubscribe-all @request-response)
   (bus/unsubscribe-all @broadcast))
@@ -59,7 +75,12 @@
     (reset! request-response (-> (bus/create cg/REQUEST_RESPONSE)
                                  (bus/initialize NUM_REQUEST_RESPONSE_WORKERS)))
     (reset! broadcast (-> (bus/create cg/BROADCAST)
-                          (bus/initialize NUM_BROADCAST_WORKERS)))))
+                          (bus/initialize NUM_BROADCAST_WORKERS)))
+    (reset! persisted
+            (-> (bus/create cg/PERSISTED)
+                (bus/initialize NUM_PERSISTED_WORKERS
+                                {:queue-id :mchan_jobs
+                                 :queue-collection :mchan.queue})))))
 
 (defn destroy []
   (when @request-response
@@ -67,4 +88,7 @@
     (reset! request-response nil))
   (when @broadcast
     (bus/destroy @broadcast)
-    (reset! broadcast nil)))
+    (reset! broadcast nil))
+  (when @persisted
+    (bus/destroy @persisted)
+    (reset! persisted nil)))
