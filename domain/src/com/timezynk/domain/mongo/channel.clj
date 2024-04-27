@@ -1,47 +1,70 @@
 (ns com.timezynk.domain.mongo.channel
   (:require
-   [com.timezynk.useful.channel :as c]
+   [somnium.congomongo :as mongo]
+   [com.timezynk.bus.core :as bus]
+   [com.timezynk.bus.group :as cg]
    [com.timezynk.domain.mongo.channel.context :as context]
    [com.timezynk.domain.mongo.channel.hook :refer [->PerformanceTrackingHook]]))
 
 (def ^:const WAIT_TIMEOUT 10000)
 
-(defonce channel (atom nil))
+(def ^:const NUM_REQUEST_RESPONSE_WORKERS 2)
+
+(def ^:const NUM_BROADCAST_WORKERS 2)
+
+(defonce request-response (atom nil))
+
+(defonce broadcast (atom nil))
 
 (defn put! [topic cname & {:keys [new old context]}]
   (when (and topic cname (or (seq new) (seq old)))
-    (binding [c/*debug* false]
-      (->> (map vector (or new (repeat nil))
-                (or old (repeat nil)))
-           (c/publish! @channel
-                       (or context
-                           (context/from-request)
-                           (context/placeholder))
-                       topic
-                       cname)
-           (c/wait-for WAIT_TIMEOUT)))))
-
-(defn- init-channel []
-  (compare-and-set! channel nil (.getId (Thread/currentThread)))
-  (when (= (.getId (Thread/currentThread)) @channel)
-    (reset! channel (c/start-channel!))))
+    (let [messages (map vector
+                        (or new (repeat nil))
+                        (or old (repeat nil)))
+          context (or context
+                      (context/from-request)
+                      (context/placeholder))]
+      (when @request-response
+        (->> messages
+             (bus/publish @request-response context topic cname)
+             (bus/wait-for WAIT_TIMEOUT)))
+      (when @broadcast
+        (bus/publish @broadcast context topic cname messages)))))
 
 (defn subscribe
   "Add new request response subscriber to topic. Wait until response is sent before next message is sent.
    Topic can be an array of topic or just a single topic."
   ([topic f] (subscribe topic nil f))
   ([topic collection-name f]
-   (init-channel)
-   (c/subscribe-request-response topic
-                                 collection-name
-                                 (->PerformanceTrackingHook f))))
+   (bus/subscribe @request-response
+                  topic
+                  collection-name
+                  (->PerformanceTrackingHook f))))
 
 (defn subscribe-broadcast
   "Add new request subscriber to topic. Messages are sent with lower priority and the next message is sent immediately.
    Topic can be an array of topic or just a single topic."
   [topic collection-name f]
-  (init-channel)
-  (c/subscribe-broadcast topic collection-name (->PerformanceTrackingHook f)))
+  (bus/subscribe @broadcast
+                 topic
+                 collection-name
+                 (->PerformanceTrackingHook f)))
 
 (defn unsubscribe-all []
-  (c/unsubscribe-all))
+  (bus/unsubscribe-all @request-response)
+  (bus/unsubscribe-all @broadcast))
+
+(defn init [db]
+  (mongo/with-mongo db
+    (reset! request-response (-> (bus/create cg/REQUEST_RESPONSE)
+                                 (bus/initialize NUM_REQUEST_RESPONSE_WORKERS)))
+    (reset! broadcast (-> (bus/create cg/BROADCAST)
+                          (bus/initialize NUM_BROADCAST_WORKERS)))))
+
+(defn destroy []
+  (when @request-response
+    (bus/destroy @request-response)
+    (reset! request-response nil))
+  (when @broadcast
+    (bus/destroy @broadcast)
+    (reset! broadcast nil)))
