@@ -1,4 +1,4 @@
-(defproject com.timezynk/domain-types "1.0.13"
+(defproject com.timezynk/domain-types "1.0.15"
   :description "Modeling extras built on top of domain"
   :url "https://github.com/TimeZynk/domain/tree/master/domain_types"
   :license {:name "BSD 3 Clause"
