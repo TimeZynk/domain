@@ -1,6 +1,6 @@
 (ns com.timezynk.domain.mongo.channel.hook
   (:require [somnium.congomongo :as mongo]
-            [com.timezynk.useful.channel.subscriber.hook :refer [Hook]]
+            [com.timezynk.bus.subscriber.hook :refer [Hook]]
             [com.timezynk.useful.mongo.db :refer [db]]
             [com.timezynk.useful.prometheus.core :as metrics]
             [com.timezynk.domain.context :as context]))
@@ -14,6 +14,9 @@
 
 (defrecord PerformanceTrackingHook [f]
   Hook
+
+  (id [this]
+    (->str this))
 
   (call [this topic cname context message]
     (mongo/with-mongo @db
