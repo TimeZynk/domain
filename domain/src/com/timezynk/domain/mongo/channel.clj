@@ -68,7 +68,8 @@
 
 (defn unsubscribe-all []
   (bus/unsubscribe-all @request-response)
-  (bus/unsubscribe-all @broadcast))
+  (bus/unsubscribe-all @broadcast)
+  (bus/unsubscribe-all @persisted))
 
 (defn init [db]
   (mongo/with-mongo db
