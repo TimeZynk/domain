@@ -1,6 +1,6 @@
 (ns com.timezynk.domain.mongo.channel.context
   (:require [clojure.string :as string]
-            [com.timezynk.useful.channel.context :refer [Context]]
+            [com.timezynk.bus.context :refer [Context]]
             [com.timezynk.domain.context :refer [*request*]])
   (:import [org.bson.types ObjectId]))
 
