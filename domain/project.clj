@@ -14,7 +14,7 @@
                  [congomongo "2.6.0" :scope "provided"]
                  [org.clojure/clojure "1.11.1" :scope "provided"]
                  [slingshot "0.12.2"]
-                 [tortue/spy "2.13.0"]]
+                 [tortue/spy "2.14.0"]]
   :repl-options {:init-ns com.timezynk.domain.core}
   :test-paths ["src" "test"]
   :plugins [[lein-cljfmt "0.6.7"]]
