@@ -73,10 +73,12 @@
 
 (defn init [db]
   (mongo/with-mongo db
-    (reset! request-response (-> (bus/create cg/REQUEST_RESPONSE)
-                                 (bus/initialize NUM_REQUEST_RESPONSE_WORKERS)))
-    (reset! broadcast (-> (bus/create cg/BROADCAST)
-                          (bus/initialize NUM_BROADCAST_WORKERS)))
+    (reset! request-response
+            (-> (bus/create cg/REQUEST_RESPONSE)
+                (bus/initialize NUM_REQUEST_RESPONSE_WORKERS)))
+    (reset! broadcast
+            (-> (bus/create cg/BROADCAST)
+                (bus/initialize NUM_BROADCAST_WORKERS)))
     (reset! persisted
             (-> (bus/create cg/PERSISTED)
                 (bus/initialize NUM_PERSISTED_WORKERS
