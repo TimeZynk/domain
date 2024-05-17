@@ -1,9 +1,9 @@
-(defproject com.timezynk/domain-types "1.0.15"
+(defproject com.timezynk/domain-types "1.0.16"
   :description "Modeling extras built on top of domain"
   :url "https://github.com/TimeZynk/domain/tree/master/domain_types"
   :license {:name "BSD 3 Clause"
             :url "https://opensource.org/licenses/BSD-3-Clause"}
-  :dependencies [[com.timezynk/domain "2.3.0"]
+  :dependencies [[com.timezynk/domain "2.3.1"]
                  [com.timezynk/useful "4.5.0" :scope "dev"]
                  [congomongo "2.6.0" :scope "provided"]
                  [org.clojure/clojure "1.11.1" :scope "provided"]
