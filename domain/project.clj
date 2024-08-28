@@ -7,10 +7,10 @@
         :url  "https://github.com/TimeZynk/domain"}
   :dependencies [[com.novemberain/validateur "1.2.0"]
                  [com.timezynk/assembly-line "1.0.1"]
-                 [com.timezynk/bus "1.2.4"]
+                 [com.timezynk/bus "1.2.5"]
                  [com.timezynk/cancancan "0.3.0"]
-                 [com.timezynk/useful "4.5.2"]
-                 [compojure "1.7.0" :scope "provided" :exclusions [commons-codec]]
+                 [com.timezynk/useful "4.8.0"]
+                 [compojure "1.7.1" :scope "provided" :exclusions [commons-codec]]
                  [congomongo "2.6.0" :scope "provided"]
                  [org.clojure/clojure "1.11.1" :scope "provided"]
                  [slingshot "0.12.2"]
