@@ -1,9 +1,9 @@
 (ns com.timezynk.domain.mongo.channel.hook
-  (:require [somnium.congomongo :as mongo]
-            [com.timezynk.bus.subscriber.hook :refer [Hook]]
-            [com.timezynk.useful.mongo.db :refer [db]]
+  (:require [com.timezynk.bus.subscriber.hook :refer [Hook]]
+            [com.timezynk.domain.context :as context]
+            [com.timezynk.domus.mongo.db :refer [db]]
             [com.timezynk.useful.prometheus.core :as metrics]
-            [com.timezynk.domain.context :as context]))
+            [somnium.congomongo :as mongo]))
 
 (defonce handler-time (metrics/counter :channel_handler_time_seconds
                                        "A counter of the total user time used for a handler"
