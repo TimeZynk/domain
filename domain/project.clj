@@ -1,15 +1,20 @@
-(defproject com.timezynk/domain "2.3.4"
+(defproject com.timezynk/domain "2.3.5"
   :description "Database modeling library for Clojure and MongoDB"
   :url "https://github.com/TimeZynk/domain/tree/master/domain"
   :license {:name "BSD 3 Clause"
             :url "https://opensource.org/licenses/BSD-3-Clause"}
   :scm {:name "git"
         :url  "https://github.com/TimeZynk/domain"}
-  :dependencies [[com.novemberain/validateur "1.2.0"]
+  :dependencies [[ch.qos.logback/logback-core "1.2.12"]
+                 [ch.qos.logback/logback-classic "1.2.12"]
+                 [ch.qos.logback.contrib/logback-jackson "0.1.5"]
+                 [ch.qos.logback.contrib/logback-json-classic "0.1.5"]
+                 [com.novemberain/validateur "1.2.0"]
                  [com.timezynk/assembly-line "1.0.1"]
-                 [com.timezynk/bus "1.2.5"]
+                 [com.timezynk/bus "1.2.6"]
                  [com.timezynk/cancancan "0.3.0"]
-                 [com.timezynk/useful "4.8.0"]
+                 [com.timezynk/domus "1.0.0"]
+                 [com.timezynk/useful "4.9.0"]
                  [compojure "1.7.1" :scope "provided" :exclusions [commons-codec]]
                  [congomongo "2.6.0" :scope "provided"]
                  [org.clojure/clojure "1.11.1" :scope "provided"]

@@ -5,8 +5,9 @@
    [clojure.string :as s]
    [clojure.walk :refer [postwalk-replace]]
    [com.timezynk.domain.update-leafs :refer [update-leafs]]
+   [com.timezynk.domus.mongo :refer [intersecting-query start-inside-period-query]]
    [com.timezynk.useful.date :as date]
-   [com.timezynk.useful.mongo :as um :refer [object-id? intersecting-query start-inside-period-query]]
+   [com.timezynk.useful.mongo :as um :refer [object-id?]]
    [slingshot.slingshot :refer [throw+]]))
 
                                         ;pack query

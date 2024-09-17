@@ -6,8 +6,8 @@
    [clojure.set :refer [rename-keys]]
    [clojure.walk :refer [postwalk-replace]]
    [com.timezynk.domain.mongo.channel :as mchan]
+   [com.timezynk.domus.mongo.db :refer [db]]
    [com.timezynk.useful.mongo :as um]
-   [com.timezynk.useful.mongo.db :refer [db]]
    [com.timezynk.useful.rest.current-user :as current-session]
    [somnium.congomongo :as mongo]
    com.timezynk.domain.mongo.predicates)
