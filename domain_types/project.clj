@@ -3,8 +3,8 @@
   :url "https://github.com/TimeZynk/domain/tree/master/domain_types"
   :license {:name "BSD 3 Clause"
             :url "https://opensource.org/licenses/BSD-3-Clause"}
-  :dependencies [[com.timezynk/domain "2.3.6"]
-                 [com.timezynk/useful "4.10.0" :scope "dev"]
+  :dependencies [[com.timezynk/domain "2.3.6" :scope "provided"]
+                 [com.timezynk/useful "4.10.0" :scope "provided"]
                  [congomongo "2.6.0" :scope "provided"]
                  [org.clojure/clojure "1.11.1" :scope "provided"]
                  [slingshot "0.12.2"]]
