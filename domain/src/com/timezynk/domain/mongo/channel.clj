@@ -83,7 +83,9 @@
             (-> (bus/create cg/PERSISTED)
                 (bus/initialize NUM_PERSISTED_WORKERS
                                 {:queue-id :mchan_jobs
-                                 :queue-collection :mchan.queue})))))
+                                 :queue-collection :mchan.queue
+                                 :min-interval (System/getenv "BACKGROUND_JOB_QUEUE_MINIMUM_INTERVAL")
+                                 :min-sleep (System/getenv "BACKGROUND_JOB_QUEUE_MINIMUM_SLEEP")})))))
 
 (defn destroy []
   (when @request-response
