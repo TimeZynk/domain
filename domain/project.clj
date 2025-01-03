@@ -11,7 +11,7 @@
                  [ch.qos.logback.contrib/logback-json-classic "0.1.5" :scope "provided"]
                  [com.novemberain/validateur "1.2.0"]
                  [com.timezynk/assembly-line "1.0.1"]
-                 [com.timezynk/bus "1.2.7" :scope "provided"]
+                 [com.timezynk/bus "1.3.0" :scope "provided"]
                  [com.timezynk/cancancan "0.3.0" :scope "provided"]
                  [com.timezynk/domus "1.0.2" :scope "provided"]
                  [com.timezynk/useful "4.10.0" :scope "provided"]
