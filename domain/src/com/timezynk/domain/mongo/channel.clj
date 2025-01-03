@@ -3,6 +3,7 @@
    [somnium.congomongo :as mongo]
    [com.timezynk.bus.core :as bus]
    [com.timezynk.bus.group :as cg]
+   [com.timezynk.useful.env :as env]
    [com.timezynk.domain.mongo.channel.context :as context]
    [com.timezynk.domain.mongo.channel.hook :refer [->PerformanceTrackingHook]]))
 
@@ -12,7 +13,8 @@
 
 (def ^:const NUM_BROADCAST_WORKERS 2)
 
-(def ^:const NUM_PERSISTED_WORKERS 2)
+(def NUM_PERSISTED_WORKERS
+  (env/parse-int-var "BACKGROUND_JOB_QUEUE_NUM_WORKERS" 2))
 
 (defonce request-response (atom nil))
 
