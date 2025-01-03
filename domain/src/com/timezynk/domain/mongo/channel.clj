@@ -16,6 +16,12 @@
 (def NUM_PERSISTED_WORKERS
   (env/parse-int-var "BACKGROUND_JOB_QUEUE_NUM_WORKERS" 2))
 
+(def MIN_PERSISTED_INTERVAL
+  (env/parse-int-var "BACKGROUND_JOB_QUEUE_MINIMUM_INTERVAL"))
+
+(def MIN_PERSISTED_SLEEP
+  (env/parse-int-var "BACKGROUND_JOB_QUEUE_MINIMUM_SLEEP"))
+
 (defonce request-response (atom nil))
 
 (defonce broadcast (atom nil))
@@ -86,8 +92,8 @@
                 (bus/initialize NUM_PERSISTED_WORKERS
                                 {:queue-id :mchan_jobs
                                  :queue-collection :mchan.queue
-                                 :min-interval (System/getenv "BACKGROUND_JOB_QUEUE_MINIMUM_INTERVAL")
-                                 :min-sleep (System/getenv "BACKGROUND_JOB_QUEUE_MINIMUM_SLEEP")})))))
+                                 :min-interval MIN_PERSISTED_INTERVAL
+                                 :min-sleep MIN_PERSISTED_SLEEP})))))
 
 (defn destroy []
   (when @request-response
