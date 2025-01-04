@@ -3,6 +3,7 @@
    [somnium.congomongo :as mongo]
    [com.timezynk.bus.core :as bus]
    [com.timezynk.bus.group :as cg]
+   [com.timezynk.useful.env :as env]
    [com.timezynk.domain.mongo.channel.context :as context]
    [com.timezynk.domain.mongo.channel.hook :refer [->PerformanceTrackingHook]]))
 
@@ -12,7 +13,14 @@
 
 (def ^:const NUM_BROADCAST_WORKERS 2)
 
-(def ^:const NUM_PERSISTED_WORKERS 2)
+(def NUM_PERSISTED_WORKERS
+  (env/parse-int-var "BACKGROUND_JOB_QUEUE_NUM_WORKERS" 2))
+
+(def MIN_PERSISTED_INTERVAL
+  (env/parse-int-var "BACKGROUND_JOB_QUEUE_MINIMUM_INTERVAL"))
+
+(def MIN_PERSISTED_SLEEP
+  (env/parse-int-var "BACKGROUND_JOB_QUEUE_MINIMUM_SLEEP"))
 
 (defonce request-response (atom nil))
 
@@ -83,7 +91,9 @@
             (-> (bus/create cg/PERSISTED)
                 (bus/initialize NUM_PERSISTED_WORKERS
                                 {:queue-id :mchan_jobs
-                                 :queue-collection :mchan.queue})))))
+                                 :queue-collection :mchan.queue
+                                 :min-interval MIN_PERSISTED_INTERVAL
+                                 :min-sleep MIN_PERSISTED_SLEEP})))))
 
 (defn destroy []
   (when @request-response
