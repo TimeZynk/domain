@@ -16,6 +16,9 @@
 (def NUM_PERSISTED_WORKERS
   (env/parse-int-var "BACKGROUND_JOB_QUEUE_NUM_WORKERS" 2))
 
+(def PERSISTED_THREAD_PRIORITY
+  (env/parse-int-var "BACKGROUND_JOB_QUEUE_WORKER_PRIORITY"))
+
 (def MIN_PERSISTED_INTERVAL
   (env/parse-int-var "BACKGROUND_JOB_QUEUE_MINIMUM_INTERVAL"))
 
@@ -92,6 +95,7 @@
                 (bus/initialize NUM_PERSISTED_WORKERS
                                 {:queue-id :mchan_jobs
                                  :queue-collection :mchan.queue
+                                 :thread-priority PERSISTED_THREAD_PRIORITY
                                  :min-interval MIN_PERSISTED_INTERVAL
                                  :min-sleep MIN_PERSISTED_SLEEP})))))
 
