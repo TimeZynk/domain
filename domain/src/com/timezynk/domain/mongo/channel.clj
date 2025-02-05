@@ -37,7 +37,7 @@
     :created :valid-from :valid-to})
 
 (defn- significant
-  "Strips `doc` of extra-domain fields."
+  "Strips `doc` of non-domain fields."
   [doc]
   (apply dissoc doc NON_DOMAIN_FIELDS))
 
