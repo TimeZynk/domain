@@ -31,22 +31,50 @@
 
 (defonce persisted (atom nil))
 
+(def ^:private ^:const NON_DOMAIN_FIELDS
+  #{:id :vid :pid :lock-id
+    :created-by :changed-by
+    :created :valid-from :valid-to})
+
+(defn- significant
+  "Strips `doc` of non-domain fields."
+  [doc]
+  (apply dissoc doc NON_DOMAIN_FIELDS))
+
+(defn- changed?
+  "True if the document pair represents domain-level change, false otherwise."
+  [pair]
+  (->> pair (map significant) (apply not=)))
+
+(defn- pack
+  "Packs documents into the message format which `bus` expects."
+  [new-docs old-docs]
+  (->> [new-docs old-docs]
+       (map #(or % (repeat nil)))
+       (apply map vector)))
+
+(defn- debouncer
+  "Builds a predicate which determines which message pair is not a NOOP."
+  [topic]
+  (some-fn (constantly (not= :update topic))
+           changed?))
+
 (defn put! [topic cname & {:keys [new old context]}]
   (when (and topic cname (or (seq new) (seq old)))
-    (let [messages (map vector
-                        (or new (repeat nil))
-                        (or old (repeat nil)))
+    (let [messages (->> (pack new old)
+                        (filterv (debouncer topic)))
           context (or context
                       (context/from-request)
                       (context/placeholder))]
-      (when @request-response
-        (->> messages
-             (bus/publish @request-response context topic cname)
-             (bus/wait-for WAIT_TIMEOUT)))
-      (when @broadcast
-        (bus/publish @broadcast context topic cname messages))
-      (when @persisted
-        (bus/publish @persisted context topic cname messages)))))
+      (when (seq messages)
+        (when @request-response
+          (->> messages
+               (bus/publish @request-response context topic cname)
+               (bus/wait-for WAIT_TIMEOUT)))
+        (when @broadcast
+          (bus/publish @broadcast context topic cname messages))
+        (when @persisted
+          (bus/publish @persisted context topic cname messages))))))
 
 (defn subscribe
   "Add new request response subscriber to topic. Wait until response is sent before next message is sent.
