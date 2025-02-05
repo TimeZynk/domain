@@ -31,10 +31,15 @@
 
 (defonce persisted (atom nil))
 
+(def ^:private ^:const NON_DOMAIN_FIELDS
+  #{:id :vid :pid :lock-id
+    :created-by :changed-by
+    :created :valid-from :valid-to})
+
 (defn- significant
   "Strips `doc` of extra-domain fields."
   [doc]
-  (dissoc doc :lock-id :changed-by :valid-from))
+  (apply dissoc doc NON_DOMAIN_FIELDS))
 
 (defn- changed?
   "True if the document pair represents domain-level change, false otherwise."
